@@ -1,6 +1,12 @@
 {
 	"scripts": {
-		"build": "tsx ./webpack.base.ts --watch"
+		"build": "tsx ./webpack.base.ts",
+		"build:cfw:global": "tsx ./webpack.base.ts cfw global-proxy",
+		"build:cfw:auto": "tsx ./webpack.base.ts cfw auto-routing",
+		"build:cvr:global": "tsx ./webpack.base.ts cvr global-proxy",
+		"build:cvr:auto": "tsx ./webpack.base.ts cvr auto-routing",
+		"build:party:global": "tsx ./webpack.base.ts clash-party global-proxy",
+		"build:party:auto": "tsx ./webpack.base.ts clash-party auto-routing"
 	},
 	"dependencies": {
 		"lodash": "^4.17.23",

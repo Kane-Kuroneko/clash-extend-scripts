@@ -1,7 +1,10 @@
+
+
 /**
- * 创建一个DuangCloud风格和规则的Clash分流配置,并进行了更合理的优化
+ * 自动路由模式配置
+ * 完整的 DuangCloud 分流规则
  */
-export class DuangCloudConf extends Clash {
+export class AutoRoutingGroup extends Clash {
 	// source : ClashConfig;
 	presetGroups = {
 		[SelectorSymbols.Auto] : '♻️ 最低延迟' ,
@@ -42,7 +45,7 @@ export class DuangCloudConf extends Clash {
 	
 	constructor(
 		{ source , raw }: { source: Partial<ClashConfig>, raw: string } ,
-		{ axios , yaml , notify , console }: { axios: any, yaml: YAML, notify: any, console: Console } ,
+		{ axios , yaml , notify , console }: { axios: unknown, yaml: YAML, notify: unknown, console: Console } ,
 		{ name , url , interval , selected }: { name: string, url: string, interval: number, selected: string[] } ,
 	) {
 		super(
@@ -50,15 +53,10 @@ export class DuangCloudConf extends Clash {
 			{ axios , yaml , notify , console } ,
 			{ name , url , interval , selected } ,
 		);
-		source['proxy-groups'] = [];
-		Object.assign( (
-			this as any
-		) , {
-			source ,
-			console ,
-			yaml ,
-			notify ,
-		} );
+		// proxy-groups 和 rules 已在 Clash 基类中清空，此处不需要再次清空
+		this.source = source as ClashConfig;
+		this.console = console;
+		this.yaml = yaml;
 		this.proxiesList = source.proxies.map( ( proxy ) => proxy.name );
 		this.source.rules = duangRules;
 		this.modifyDuangRules();
@@ -280,12 +278,13 @@ export class DuangCloudConf extends Clash {
 		] );
 		
 		//bilibili国内和国际规则
+		const bilibiliRules = [
+			...__CompileTime_Rules__.CN_bilibili ,
+			...__CompileTime_Rules__.ITNL_bilibili ,
+		].map( (rule) => converters.autoDetectRuleType(rule) as [keyof typeof RuleType, string] );
 		this.addRulesToGroup(
 			this.presetGroups['regional-segmentation'] ,
-			[
-				...__CompileTime_Rules__.CN_bilibili ,
-				...__CompileTime_Rules__.ITNL_bilibili ,
-			].map( converters.autoDetectRuleType ),
+			bilibiliRules ,
 		);
 		this.addRulesToGroup(
 			this.presetGroups['regional-segmentation'] ,
@@ -293,21 +292,25 @@ export class DuangCloudConf extends Clash {
 		);
 		
 		//添加被gfw屏蔽的规则
+		const gfwRules = __CompileTime_Rules__.Blocked_By_GFW.map(
+			(rule) => converters.autoDetectRuleType(rule) as [keyof typeof RuleType, string]
+		);
 		this.addRulesToGroup(
 			this.presetGroups['gfw-penetrate'] ,
-			[
-				...__CompileTime_Rules__.Blocked_By_GFW ,
-			].map( converters.autoDetectRuleType ),
+			gfwRules ,
 		);
 	}
 	
 }
 
-
-import { SelectorSymbols , converters } from './utils';
-
+import {
+	ClashConfig ,
+	RuleType,
+} from "./types/clash";
+import { SelectorSymbols, converters } from './utils';
 import duangRules from './assets/duangcloud-rules';
-import { Clash , Group } from './Clash';
+import { Clash, Group } from './Clash';
+import { YAML } from "./types/client";
 
 /**
  * 警告!

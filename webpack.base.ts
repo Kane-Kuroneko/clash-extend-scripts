@@ -1,85 +1,116 @@
 
 const { DefinePlugin } = webpack;
 
+// 参数定义 - 使用自定义解析支持位置参数
 const optionDefinitions = [
 	{
-		name : 'flyingbird' as const ,
-		type : Boolean ,
-		
+		name: 'client' as const,
+		type: String,
+		defaultOption: true,
+		multiple: true,
 	},
 	{
-		name : 'watch' as const,
-		type : Boolean,
-		defaultValue:false,
+		name: 'watch' as const,
+		alias: 'w',
+		type: Boolean,
+		defaultValue: false,
 	}
 ];
+
+// 解析参数
 const args = commandLineArgs(optionDefinitions) as TypedArgs<typeof optionDefinitions>;
-debugger;
-const conf:Configuration = {
-	mode : 'production' ,
-	entry : {
-		// 'generic':'./src/generic-transfer-to-DC.js',
-		'cfw-script' : {
-			import : './src/clients/clash-for-windows/cfw-script.ts' ,
-			filename : 'clash-for-windows/cfw-script.js',
-			library : {
-				type : 'commonjs2'
+
+// 从位置参数中提取 client 和 mode
+// multiple: true 会将所有位置参数收集为数组
+const positionalArgs = Array.isArray(args.client) ? args.client : [];
+
+// 验证并提取参数
+let clientArg: string | undefined;
+let modeArg: string | undefined;
+
+const validClients = ['cfw', 'cvr', 'clash-party'];
+const validModes = ['global-proxy', 'auto-routing'];
+
+positionalArgs.forEach(arg => {
+	if (validClients.includes(arg)) {
+		clientArg = arg;
+	} else if (validModes.includes(arg)) {
+		modeArg = arg;
+	}
+});
+
+// 验证必填参数
+if (!clientArg || !modeArg) {
+	console.error('错误: 必须指定 client 和 mode 参数');
+	console.error('用法: npm run build <cfw|cvr> <global-proxy|auto-routing>');
+	console.error('示例: npm run build cvr global-proxy');
+	console.error('示例: npm run build cfw auto-routing');
+	process.exit(1);
+}
+
+console.log(`构建配置: client=${clientArg}, mode=${modeArg}`);
+
+const conf: Configuration = {
+	mode: 'production',
+	entry: {
+		[`${clientArg}-${modeArg}`]: {
+			import: clientArg === 'cfw' 
+				? './src/clients/clash-for-windows/main.ts'
+				: clientArg === 'cvr'
+					? './src/clients/clash-verge/main.ts'
+					: './src/clients/clash-party/main.ts',
+			filename: `${clientArg}/${modeArg}.js`,
+			library: {
+				type: clientArg === 'cfw' ? 'commonjs2' : 'this'
 			}
-		} ,
-		'clash-verge' : {
-			import : './src/clients/clash-verge/script.ts' ,
-			filename : 'clash-verge/script.js' ,
-			library : {
-				type : 'this'
-			}
-		} ,
-	} ,
-	output : {
-		filename : `[name].js` ,
-		iife : false ,
-	} ,
-	watch : args.watch ,
-	stats : 'minimal' ,
-	resolve : {
+		}
+	},
+	output: {
+		filename: `[name].js`,
+		iife: false,
+	},
+	watch: args.watch,
+	stats: 'minimal',
+	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
 	},
-	module : {
-		rules : [
+	module: {
+		rules: [
 			{
-				test : /\.(t|j)sx?$/i ,
-				use : {
-					loader : 'babel-loader' ,
-					options : babelConf,
+				test: /\.(t|j)sx?$/i,
+				use: {
+					loader: 'babel-loader',
+					options: babelConf,
 				},
-			} ,
+			},
 		],
-	} ,
+	},
 	performance: {
 		maxEntrypointSize: 10000000,
 		maxAssetSize: 30000000,
-		hints : false
+		hints: false
 	},
-	optimization : {
-		mangleExports : false ,
-		minimize : true ,
-		minimizer : [
+	optimization: {
+		mangleExports: false,
+		minimize: true,
+		minimizer: [
 			new TerserPlugin({
-				parallel : true ,
-				terserOptions : {
-					keep_fnames : true ,
-					keep_classnames : true ,
-					format : {
-						comments : false ,
-					} ,
-				} ,
-				extractComments : false ,
-			}) ,
-		] ,
-	} ,
-	plugins : [
+				parallel: true,
+				terserOptions: {
+					keep_fnames: true,
+					keep_classnames: true,
+					format: {
+						comments: false,
+					},
+				},
+				extractComments: false,
+			})
+		],
+	},
+	plugins: [
 		new DefinePlugin({
-			__MAIN__ : `this['main']=main;` ,
-			// __CompileTime_Rules__ : JSON.stringify(await fetchRules()),
+			__MAIN__: `this['main']=main;`,
+			__ROUTING_MODE__: JSON.stringify(modeArg),
 		})
 	]
 } as Configuration;
@@ -109,7 +140,7 @@ import babelConf from './babel.config.mjs';
  * 辅助类型：将 union 转为 intersection（用于合并每个 option 的属性）
  */
 type UnionToIntersection<U> =
-	(U extends any ? (x: U) => void : never) extends (x: infer I) => void
+	(U extends unknown ? (x: U) => void : never) extends (x: infer I) => void
 		? I
 		: never;
 
@@ -126,7 +157,7 @@ type GetParserType<T> =
 		T extends BooleanConstructor ? boolean :
 			T extends NumberConstructor ? number :
 				T extends StringConstructor ? string :
-					T extends (...args: any[]) => infer R ? R :
+					T extends (...args: unknown[]) => infer R ? R :
 						unknown;
 
 /**
