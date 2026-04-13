@@ -2,39 +2,34 @@
 
 /**
  * 自动路由模式配置
- * 完整的 DuangCloud 分流规则
+ * 基于 Loyalsoldier/clash-rules 规则源
  */
 export class AutoRoutingGroup extends Clash {
-	// source : ClashConfig;
 	presetGroups = {
-		[SelectorSymbols.Auto] : '♻️ 最低延迟' ,
-		//当选择的节点不可用时回退到此线路
-		[SelectorSymbols.Fallback] : '🪓 后备线路' ,
-		[SelectorSymbols.Direct] : 'DIRECT' ,
-		[SelectorSymbols.Reject] : 'REJECT' ,
-		[SelectorSymbols.ManualA] : '🫧 自选节点A 🫧' ,
-		[SelectorSymbols.ManualB] : '🍀 自选节点B 🍀' ,
-		[SelectorSymbols.LoadBalanceHash] : '⚖️ 负载均衡-散列' ,
-		[SelectorSymbols.LoadBalanceRound] : '⚖️ 负载均衡-轮询' ,
-		//包含国外视频网站等如youtube，奈飞等
-		'foreign-media' : '🌍 国外媒体' ,
-		'gfw-penetrate' : '❄️ GFW穿透' ,
-		//地区分级的网站, 既有国内又有国外服务 , 但区别对待 ,比如bilibili
-		'regional-segmentation' : '🦚 地区分级' ,
-		//匹配所有telegram相关的域名
-		'telegram' : '📲 电报信息' ,
-		'AI' : '🖥 AI' ,
-		'microsoft' : 'Ⓜ️ 微软服务' ,
-		'apple' : '🍎 苹果服务' ,
-		'global-direct' : '🎯 全球直连' ,
-		//国际网站的广告、垃圾信息所使用的域名
-		'global-block' : '🛑 全球拦截' ,
-		//无必要的接口域名,如统计,收集信息,广告等,针对国内网站
-		'cleanse' : '🍃 应用净化' ,
-		//所有跟下载有关的网站,比如github下载releases
-		'download' : '📥 国际下载 (github)etc.' ,
-		//上面所有的规则都没匹配到
-		'slipped-past' : '🐟 漏网之鱼' ,
+		[SelectorSymbols.Auto] : 'Auto' ,
+		[SelectorSymbols.Fallback] : 'Fallback' ,
+		[SelectorSymbols.Direct] : 'Bypass' ,
+		[SelectorSymbols.Reject] : 'Block' ,
+		[SelectorSymbols.ManualA] : 'Proxy A' ,
+		[SelectorSymbols.ManualB] : 'Proxy B' ,
+		// GFW屏蔽的站点
+		'gfw' : 'GFW' ,
+		// 国外媒体
+		'foreign-media' : 'Foreign Media' ,
+		// 地区限制媒体(含b站等)
+		'region-media' : 'Region Media' ,
+		// Telegram
+		'telegram' : 'Telegram' ,
+		// AI服务
+		'AI' : 'AI' ,
+		// 微软服务
+		'microsoft' : 'Microsoft' ,
+		// 苹果服务
+		'apple' : 'Apple' ,
+		// 国际下载
+		'download' : 'Download' ,
+		// 漏网之鱼
+		'final' : 'Final' ,
 	};
 	
 	/**
@@ -58,18 +53,19 @@ export class AutoRoutingGroup extends Clash {
 		this.console = console;
 		this.yaml = yaml;
 		this.proxiesList = source.proxies.map( ( proxy ) => proxy.name );
-		this.source.rules = duangRules;
-		this.modifyDuangRules();
+		
+		// 构建规则
+		this.buildRules();
+		
+		// 添加分组
 		this.addManualGroups( { name , url , interval , selected } );
 		this.addAutoSelect( { name , url , interval , selected } );
-		this.addDistributions( { name , url , interval , selected } );
 		this.addFallback( { name , url , interval , selected } );
-		this.addLoadBalance( { name , url , interval , selected } );
+		this.addDistributionGroups( { name , url , interval , selected } );
 	}
 	
-	
 	/**
-	 * 添加手动切换和节点选择这两个分组
+	 * 添加手动切换分组
 	 */
 	addManualGroups( { name , url , interval , selected } ) {
 		this.addGroups(
@@ -79,8 +75,6 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
 					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
@@ -91,26 +85,24 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
 					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
+			// Region Media 分组
 			new Group( {
-				name : this.presetGroups['regional-segmentation'] ,
+				name : this.presetGroups['region-media'] ,
 				proxies : [
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
 					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
 					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
+			// Download 分组
 			new Group( {
 				name : this.presetGroups['download'] ,
 				proxies : [
@@ -119,22 +111,19 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
 					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
 					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
+			// GFW 分组
 			new Group( {
-				name : this.presetGroups['gfw-penetrate'] ,
+				name : this.presetGroups['gfw'] ,
 				proxies : [
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
 					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-					this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
 					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
@@ -143,7 +132,7 @@ export class AutoRoutingGroup extends Clash {
 	}
 	
 	/**
-	 *
+	 * 添加自动选择分组
 	 */
 	addAutoSelect( { name , url , interval , selected } ) {
 		this.addGroups(
@@ -158,18 +147,32 @@ export class AutoRoutingGroup extends Clash {
 	}
 	
 	/**
-	 * 添加其他的分流组
+	 * 添加Fallback分组
 	 */
-	addDistributions( { name , url , interval , selected } ) {
+	addFallback( { name , url , interval , selected } ) {
+		this.console.log( url );
+		this.console.log( interval );
+		this.addGroups( new Group( {
+			name : this.presetGroups[SelectorSymbols.Fallback] ,
+			type : 'fallback' ,
+			proxies : this.proxiesList ,
+			url : 'http://www.gstatic.com/generate_204' ,
+			interval : 180 ,
+		} ) );
+	}
+	
+	/**
+	 * 添加功能分流组
+	 */
+	addDistributionGroups( { name , url , interval , selected } ) {
 		const _proxies = [
 			this.presetGroups[SelectorSymbols.Direct] ,
 			this.presetGroups[SelectorSymbols.Reject] ,
 			this.presetGroups[SelectorSymbols.ManualA] ,
 			this.presetGroups[SelectorSymbols.ManualB] ,
-			this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
-			this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
 			...this.proxiesList ,
 		];
+		
 		const groups = [
 			new Group( {
 				name : this.presetGroups['foreign-media'] ,
@@ -192,19 +195,7 @@ export class AutoRoutingGroup extends Clash {
 				proxies : _proxies ,
 			} ) ,
 			new Group( {
-				name : this.presetGroups['global-direct'] ,
-				proxies : _proxies ,
-			} ) ,
-			new Group( {
-				name : this.presetGroups['global-block'] ,
-				proxies : _proxies ,
-			} ) ,
-			new Group( {
-				name : this.presetGroups['cleanse'] ,
-				proxies : _proxies ,
-			} ) ,
-			new Group( {
-				name : this.presetGroups['slipped-past'] ,
+				name : this.presetGroups['final'] ,
 				proxies : _proxies ,
 			} ) ,
 		];
@@ -212,93 +203,67 @@ export class AutoRoutingGroup extends Clash {
 	}
 	
 	/**
-	 *
+	 * 构建规则
 	 */
-	addLoadBalance( { name , url , interval , selected } ) {
-		this.addGroups(
-			new Group( {
-				name : this.presetGroups[SelectorSymbols.LoadBalanceHash] ,
-				type : 'load-balance' ,
-				strategy : 'consistent-hashing' ,
-				proxies : this.proxiesList ,
-				url : 'http://www.gstatic.com/generate_204' ,
-				interval : 180 ,
-			} ) ,
-			new Group( {
-				name : this.presetGroups[SelectorSymbols.LoadBalanceRound] ,
-				type : 'load-balance' ,
-				strategy : 'round-robin' ,
-				proxies : this.proxiesList ,
-				url : 'http://www.gstatic.com/generate_204' ,
-				interval : 180 ,
-			} ) ,
+	buildRules() {
+		const rules: string[] = [];
+		
+		// 1. GFW规则 -> GFW分组
+		const gfwRules = __CompileTime_Rules__.Loyalsoldier_GFW.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['gfw']}`
 		);
-	}
-	
-	addFallback( { name , url , interval , selected } ) {
-		this.console.log( url );
-		this.console.log( interval );
-		this.addGroups( new Group( {
-			name : this.presetGroups[SelectorSymbols.Fallback] ,
-			type : 'fallback' ,
-			proxies : this.proxiesList ,
-			url : 'http://www.gstatic.com/generate_204' ,
-			interval : 180 ,
-		} ) );
-	}
-	
-	async modifyDuangRules() {
-		const duangOldReplaceMapping = {
-			// '🎯 全球直连' : this.#presetGroups[],
-			// '🛑 全球拦截':'',
-			// '🍃 应用净化':'',
-			// 'Ⓜ️ 微软服务':'',
-			// '🍎 苹果服务' : '' ,
-			// '🌍 国外媒体' : '' ,
-			'🚀 节点选择' : this.presetGroups[SelectorSymbols.ManualA] ,
-			'🖥 ChatGPT' : this.presetGroups["AI"] ,
-			// '📲 电报信息' : '' ,
-			// '🐟 漏网之鱼' : '' ,
-		};
-		//把duangCloud规则集里面的组名改为新的组
-		this.source.rules = this.source.rules.map( ( rule ) => {
-			for( const k in duangOldReplaceMapping ){
-				if( duangOldReplaceMapping.hasOwnProperty( k ) ) {
-					const v = duangOldReplaceMapping[k];
-					if( rule.includes( k ) ) {
-						return rule.replaceAll( k , v );
-					}
-				}
-			}
-			return rule;
-		} );
+		rules.push(...gfwRules);
 		
-		this.addRulesToGroup( this.presetGroups['download'] , [
-			[ 'DOMAIN' , 'objects.githubusercontent.com' ] ,
-		] );
+		// 2. Proxy规则 -> Foreign Media分组
+		const proxyRules = __CompileTime_Rules__.Loyalsoldier_Proxy.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['foreign-media']}`
+		);
+		rules.push(...proxyRules);
 		
-		//bilibili国内和国际规则
+		// 3. Telegram规则 -> Telegram分组
+		const telegramRules = __CompileTime_Rules__.Loyalsoldier_Telegram.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['telegram']}`
+		);
+		rules.push(...telegramRules);
+		
+		// 4. Microsoft规则 -> Microsoft分组
+		const microsoftRules = __CompileTime_Rules__.Loyalsoldier_Microsoft.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['microsoft']}`
+		);
+		rules.push(...microsoftRules);
+		
+		// 5. Apple规则 -> Apple分组
+		const appleRules = __CompileTime_Rules__.Loyalsoldier_Apple.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['apple']}`
+		);
+		rules.push(...appleRules);
+		
+		// 6. 添加github下载规则到Download分组
+		rules.push(`DOMAIN,objects.githubusercontent.com,${this.presetGroups['download']}`);
+		
+		// 7. Bilibili规则到Region Media分组
 		const bilibiliRules = [
 			...__CompileTime_Rules__.CN_bilibili ,
 			...__CompileTime_Rules__.ITNL_bilibili ,
 		].map( (rule) => converters.autoDetectRuleType(rule) as [keyof typeof RuleType, string] );
-		this.addRulesToGroup(
-			this.presetGroups['regional-segmentation'] ,
-			bilibiliRules ,
-		);
-		this.addRulesToGroup(
-			this.presetGroups['regional-segmentation'] ,
-			[['DOMAIN-KEYWORD','bili']],
-		);
 		
-		//添加被gfw屏蔽的规则
-		const gfwRules = __CompileTime_Rules__.Blocked_By_GFW.map(
+		bilibiliRules.forEach(([type, value]) => {
+			rules.push(`${type},${value},${this.presetGroups['region-media']}`);
+		});
+		rules.push(`DOMAIN-KEYWORD,bili,${this.presetGroups['region-media']}`);
+		
+		// 8. 添加原有的Blocked_By_GFW规则到GFW分组
+		const blockedGfwRules = __CompileTime_Rules__.Blocked_By_GFW.map(
 			(rule) => converters.autoDetectRuleType(rule) as [keyof typeof RuleType, string]
 		);
-		this.addRulesToGroup(
-			this.presetGroups['gfw-penetrate'] ,
-			gfwRules ,
-		);
+		blockedGfwRules.forEach(([type, value]) => {
+			rules.push(`${type},${value},${this.presetGroups['gfw']}`);
+		});
+		
+		// 9. 添加Final规则(漏网之鱼)
+		rules.push(`MATCH,${this.presetGroups['final']}`);
+		
+		this.source.rules = rules;
 	}
 	
 }
@@ -308,7 +273,6 @@ import {
 	RuleType,
 } from "./types/clash";
 import { SelectorSymbols, converters } from './utils';
-import duangRules from './assets/duangcloud-rules';
 import { Clash, Group } from './Clash';
 import { YAML } from "./types/client";
 

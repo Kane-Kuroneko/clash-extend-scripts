@@ -7,8 +7,6 @@ export const SelectorSymbols = {
 	ManualB : Symbol( 'Manual-B' ) ,
 	Direct : Symbol( 'DIRECT' ) ,
 	Reject : Symbol( 'REJECT' ) ,
-	LoadBalanceHash : Symbol( 'Load-Balance-Hash' ) ,
-	LoadBalanceRound : Symbol( 'Load-Balance-Round' ) ,
 };
 
 export const dedupProxiesInGroup = (proxies:string[]) => {

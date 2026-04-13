@@ -50,6 +50,19 @@ if (!clientArg || !modeArg) {
 
 console.log(`构建配置: client=${clientArg}, mode=${modeArg}`);
 
+// 异步获取编译时规则并写入临时文件
+const compileTimeRules = await fetchRules();
+const fs = await import('fs');
+const path = await import('path');
+const { fileURLToPath } = await import('url');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rulesFilePath = path.resolve(__dirname, 'src/assets/duangcloud-rules.js');
+const rulesFileContent = `export default ${JSON.stringify(compileTimeRules)};\n`;
+fs.writeFileSync(rulesFilePath, rulesFileContent, 'utf-8');
+console.log(`已生成编译时规则文件: ${rulesFilePath}`);
+console.log(`规则数据大小: ${(JSON.stringify(compileTimeRules).length / 1024).toFixed(2)} KB`);
+
 const conf: Configuration = {
 	mode: 'production',
 	entry: {
@@ -60,9 +73,8 @@ const conf: Configuration = {
 					? './src/clients/clash-verge/main.ts'
 					: './src/clients/clash-party/main.ts',
 			filename: `${clientArg}/${modeArg}.js`,
-			library: {
-				type: clientArg === 'cfw' ? 'commonjs2' : 'this'
-			}
+			// CFW 需要 commonjs2 导出,CVR 和 Clash Party 不需要 library 配置以保持 main 函数顶层暴露
+			...(clientArg === 'cfw' ? { library: { type: 'commonjs2' } } : {})
 		}
 	},
 	output: {
@@ -111,6 +123,7 @@ const conf: Configuration = {
 		new DefinePlugin({
 			__MAIN__: `this['main']=main;`,
 			__ROUTING_MODE__: JSON.stringify(modeArg),
+			__CompileTime_Rules__: JSON.stringify(compileTimeRules),
 		})
 	]
 } as Configuration;
