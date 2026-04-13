@@ -49,7 +49,7 @@ export class AutoRoutingGroup extends Clash {
 			{ name , url , interval , selected } ,
 		);
 		// proxy-groups 和 rules 已在 Clash 基类中清空，此处不需要再次清空
-		this.source = source as ClashConfig;
+		// 注意：不能重新赋值 this.source = source，否则会覆盖基类中已清空的配置
 		this.console = console;
 		this.yaml = yaml;
 		this.proxiesList = source.proxies.map( ( proxy ) => proxy.name );

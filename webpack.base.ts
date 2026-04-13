@@ -73,13 +73,15 @@ const conf: Configuration = {
 					? './src/clients/clash-verge/main.ts'
 					: './src/clients/clash-party/main.ts',
 			filename: `${clientArg}/${modeArg}.js`,
-			// CFW 需要 commonjs2 导出,CVR 和 Clash Party 不需要 library 配置以保持 main 函数顶层暴露
+			// CFW 需要 commonjs2 导出,CVR 和 Clash Party 不配置 library,直接在源码中导出
 			...(clientArg === 'cfw' ? { library: { type: 'commonjs2' } } : {})
 		}
 	},
 	output: {
 		filename: `[name].js`,
 		iife: false,
+		// CVR 和 Clash Party 使用 var 库类型,将 main 导出为顶层变量
+		...(clientArg !== 'cfw' ? { library: { type: 'var', name: 'main' }, libraryExport: 'main' } : {}),
 	},
 	watch: args.watch,
 	stats: 'minimal',
@@ -124,7 +126,12 @@ const conf: Configuration = {
 			__MAIN__: `this['main']=main;`,
 			__ROUTING_MODE__: JSON.stringify(modeArg),
 			__CompileTime_Rules__: JSON.stringify(compileTimeRules),
-		})
+		}),
+		// CVR 和 Clash Party:在文件头部添加 var main 声明,严格模式下不报错
+		...(clientArg !== 'cfw' ? [new webpack.BannerPlugin({
+			banner: 'var main;',
+			raw: true,
+		})] : [])
 	]
 } as Configuration;
 
