@@ -50,17 +50,13 @@ if (!clientArg || !modeArg) {
 
 console.log(`构建配置: client=${clientArg}, mode=${modeArg}`);
 
-// 异步获取编译时规则并写入临时文件
+// 异步获取编译时规则
 const compileTimeRules = await fetchRules();
-const fs = await import('fs');
 const path = await import('path');
 const { fileURLToPath } = await import('url');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rulesFilePath = path.resolve(__dirname, 'src/assets/duangcloud-rules.js');
-const rulesFileContent = `export default ${JSON.stringify(compileTimeRules)};\n`;
-fs.writeFileSync(rulesFilePath, rulesFileContent, 'utf-8');
-console.log(`已生成编译时规则文件: ${rulesFilePath}`);
+// 编译时规则直接通过 DefinePlugin 注入，无需写入文件
 console.log(`规则数据大小: ${(JSON.stringify(compileTimeRules).length / 1024).toFixed(2)} KB`);
 
 const conf: Configuration = {

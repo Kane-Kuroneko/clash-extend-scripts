@@ -4,17 +4,17 @@
  */
 
 import { RoutingConfig } from './RoutingConfig';
-import { Group } from '../Clash';
-import { SelectorSymbols } from '../utils';
+import { Group } from '../ClashConfigBuilder';
+import { SelectorSymbols } from '../RuleConverters';
 import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
 
 export class GlobalRestrictedGroup extends RoutingConfig {
 	presetGroups = {
-		[SelectorSymbols.ManualA]: '🍀 自选节点 🍀',
+		[SelectorSymbols.ManualA]: '🅰️ 自选节点 🅰️',
 		'China-Geo-IP': '🇨🇳 大陆Geo-IP',
-		[SelectorSymbols.Fallback]: '🪓 后备线路',
-		[SelectorSymbols.Direct]: 'DIRECT',
-		[SelectorSymbols.Reject]: 'REJECT',
+		[SelectorSymbols.Fallback]: '🛡️ 后备线路',
+		[SelectorSymbols.Direct]: '🟢 Bypass',
+		[SelectorSymbols.Reject]: '🔴 Block',
 		[SelectorSymbols.LoadBalanceHash]: '⚖️ 负载均衡-散列',
 		[SelectorSymbols.LoadBalanceRound]: '⚖️ 负载均衡-轮询',
 	};
@@ -89,7 +89,11 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 				name: this.presetGroups[SelectorSymbols.LoadBalanceHash],
 				type: 'load-balance',
 				strategy: 'consistent-hashing',
-				proxies: this.proxiesList,
+				proxies: [
+					this.presetGroups[SelectorSymbols.Reject],
+					this.presetGroups[SelectorSymbols.Direct],
+					...this.proxiesList,
+				],
 				url: 'http://www.gstatic.com/generate_204',
 				interval: 180,
 			}),
@@ -97,7 +101,11 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 				name: this.presetGroups[SelectorSymbols.LoadBalanceRound],
 				type: 'load-balance',
 				strategy: 'round-robin',
-				proxies: this.proxiesList,
+				proxies: [
+					this.presetGroups[SelectorSymbols.Reject],
+					this.presetGroups[SelectorSymbols.Direct],
+					...this.proxiesList,
+				],
 				url: 'http://www.gstatic.com/generate_204',
 				interval: 180,
 			})
@@ -109,7 +117,11 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 			new Group({
 				name: this.presetGroups[SelectorSymbols.Fallback],
 				type: 'fallback',
-				proxies: this.proxiesList,
+				proxies: [
+					this.presetGroups[SelectorSymbols.Reject],
+					this.presetGroups[SelectorSymbols.Direct],
+					...this.proxiesList,
+				],
 				url: 'http://www.gstatic.com/generate_204',
 				interval: 180,
 			})

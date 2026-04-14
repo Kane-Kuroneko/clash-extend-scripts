@@ -1,5 +1,5 @@
 import { YAML } from "./types/client";
-import { converters, dedupProxiesInGroup } from './utils';
+import { converters, dedupProxiesInGroup } from './RuleConverters';
 import yaml from 'yaml';
 import { CGroup, ClashConfig, RuleType, _RuleObject, RuleObject } from './types/clash';
 

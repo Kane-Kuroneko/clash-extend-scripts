@@ -3,7 +3,7 @@
  * 根据分流模式返回对应的配置实例
  */
 
-import { AutoRoutingGroup } from '../Duang';
+import { AutoRoutingGroup } from '../AutoRoutingConfig';
 import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
 import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
 import type { RoutingMode } from '../types/build';

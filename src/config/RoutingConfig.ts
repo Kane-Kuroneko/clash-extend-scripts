@@ -3,8 +3,8 @@
  */
 
 import _ from 'lodash';
-import { Clash, Group } from '../Clash';
-import { SelectorSymbols, converters, dedupProxiesInGroup } from '../utils';
+import { Clash, Group } from '../ClashConfigBuilder';
+import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
 import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
 import type { ClashConfig, ClashProxyItem } from '../types/clash';
 

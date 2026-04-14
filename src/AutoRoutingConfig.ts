@@ -6,30 +6,30 @@
  */
 export class AutoRoutingGroup extends Clash {
 	presetGroups = {
-		[SelectorSymbols.Auto] : 'Auto' ,
-		[SelectorSymbols.Fallback] : 'Fallback' ,
+		[SelectorSymbols.Auto] : '♻️ Auto' ,
+		[SelectorSymbols.Fallback] : '🪓 Fallback' ,
 		[SelectorSymbols.Direct] : 'Bypass' ,
 		[SelectorSymbols.Reject] : 'Block' ,
-		[SelectorSymbols.ManualA] : 'Proxy A' ,
-		[SelectorSymbols.ManualB] : 'Proxy B' ,
+		[SelectorSymbols.ManualA] : '🫧 Proxy A 🫧' ,
+		[SelectorSymbols.ManualB] : '🍀 Proxy B 🍀' ,
 		// GFW屏蔽的站点
-		'gfw' : 'GFW' ,
+		'gfw' : '❄️ GFW' ,
 		// 国外媒体
-		'foreign-media' : 'Foreign Media' ,
+		'foreign-media' : '🌍 Foreign Media' ,
 		// 地区限制媒体(含b站等)
-		'region-media' : 'Region Media' ,
+		'region-media' : '🦚 Region Media' ,
 		// Telegram
-		'telegram' : 'Telegram' ,
+		'telegram' : '📲 Telegram' ,
 		// AI服务
-		'AI' : 'AI' ,
+		'AI' : '🖥 AI' ,
 		// 微软服务
-		'microsoft' : 'Microsoft' ,
+		'microsoft' : 'Ⓜ️ Microsoft' ,
 		// 苹果服务
-		'apple' : 'Apple' ,
+		'apple' : '🍎 Apple' ,
 		// 国际下载
-		'download' : 'Download' ,
+		'download' : '📥 Download' ,
 		// 漏网之鱼
-		'final' : 'Final' ,
+		'final' : '🐟 Final' ,
 	};
 	
 	/**
@@ -139,7 +139,11 @@ export class AutoRoutingGroup extends Clash {
 			new Group( {
 				name : this.presetGroups[SelectorSymbols.Auto] ,
 				type : 'url-test' ,
-				proxies : this.proxiesList ,
+				proxies : [
+					this.presetGroups[SelectorSymbols.Reject] ,
+					this.presetGroups[SelectorSymbols.Direct] ,
+					...this.proxiesList ,
+				] ,
 				url : 'http://www.gstatic.com/generate_204' ,
 				interval : 180 ,
 			} ) ,
@@ -155,7 +159,11 @@ export class AutoRoutingGroup extends Clash {
 		this.addGroups( new Group( {
 			name : this.presetGroups[SelectorSymbols.Fallback] ,
 			type : 'fallback' ,
-			proxies : this.proxiesList ,
+			proxies : [
+				this.presetGroups[SelectorSymbols.Reject] ,
+				this.presetGroups[SelectorSymbols.Direct] ,
+				...this.proxiesList ,
+			] ,
 			url : 'http://www.gstatic.com/generate_204' ,
 			interval : 180 ,
 		} ) );
@@ -272,8 +280,8 @@ import {
 	ClashConfig ,
 	RuleType,
 } from "./types/clash";
-import { SelectorSymbols, converters } from './utils';
-import { Clash, Group } from './Clash';
+import { SelectorSymbols, converters } from './RuleConverters';
+import { Clash, Group } from './ClashConfigBuilder';
 import { YAML } from "./types/client";
 
 /**
