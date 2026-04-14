@@ -230,7 +230,7 @@ import {
 } from "./types/clash";
 import { SelectorSymbols, converters } from './RuleConverters';
 import { Clash, Group } from './ClashConfigBuilder';
-import { YAML } from "./types/client";
+import type { YAML } from "./types/client";
 
 /**
  * 警告!

@@ -61,7 +61,11 @@ export interface ClashConfig {
 	rules: string[];
 }
 
-export type RuleObject = (
+/**
+ * 完整的规则元组类型 - 所有属性必填
+ * 用于已解析的完整 Clash 规则对象
+ */
+export type RuleTuple = (
 	[ keyof typeof RuleType, string ] & {
 		type: keyof typeof RuleType;
 		proxy: string;
@@ -81,7 +85,11 @@ export type RuleObject = (
 	}
 );
 
-export type _RuleObject =
+/**
+ * 可选的规则数组类型 - 所有属性可选
+ * 用于解析过程中的中间状态或灵活匹配
+ */
+export type RuleArray =
 	| ( [ keyof typeof RuleType, string?, string? ] & {
 		type?: keyof typeof RuleType;
 		value?: string;

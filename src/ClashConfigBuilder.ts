@@ -1,7 +1,9 @@
-import { YAML } from "./types/client";
-import { converters, dedupProxiesInGroup } from './RuleConverters';
-import yaml from 'yaml';
-import { CGroup, ClashConfig, RuleType, _RuleObject, RuleObject } from './types/clash';
+// 原生实现 isPlainObject
+const isPlainObject = (obj: unknown): boolean => {
+	return obj !== null && 
+		typeof obj === 'object' && 
+		Object.prototype.toString.call(obj) === '[object Object]';
+};
 
 export class Clash {
 	yaml: YAML;
@@ -14,7 +16,7 @@ export class Clash {
 		{ name, url, interval, selected }: { name: string, url: string, interval: number, selected: string[] },
 	) {
 		
-		if (!_.isPlainObject(source)) {
+		if (!isPlainObject(source)) {
 			console.log(source);
 			throw '参数<source>必须是个clash对象';
 		}
@@ -27,7 +29,7 @@ export class Clash {
 			rules: [] // 覆盖 source 中的 rules
 		};
 		
-		_.assign(this, {
+		Object.assign(this, {
 			source: defaultSource as ClashConfig,
 			yaml,
 			console,
@@ -44,21 +46,21 @@ export class Clash {
 	
 	renameGroup = (name: string, newName: string) => {
 		const { source } = this;
-		if (_.isArray(source['proxy-groups'])) {
+		if (Array.isArray(source['proxy-groups'])) {
 			source['proxy-groups'].forEach((group) => {
 				if (group.name === name) {
 					group.name = newName;
 				}
-				if (_.isArray(group.proxies)) {
+				if (Array.isArray(group.proxies)) {
 					group.proxies.forEach((_name, index, proxies) => {
 						if (_name === name) proxies[index] = newName;
 					});
 				}
 			});
 		}
-		if (_.isArray(source['rules'])) {
-			const rules = converters.rulesStrToRulesObject(source.rules) as _RuleObject[];
-			rules.forEach((ruleObject: _RuleObject) => {
+		if (Array.isArray(source['rules'])) {
+			const rules = converters.rulesStrToRulesObject(source.rules) as RuleArray[];
+			rules.forEach((ruleObject: RuleArray) => {
 				if (ruleObject.proxy === name) {
 					ruleObject.proxy = newName;
 				}
@@ -77,7 +79,7 @@ export class Clash {
 	addProxiesToGroup = (group: string, prefix: string[] = [], suffix: string[] = []) => {
 		const { source } = this;
 		const target = source['proxy-groups']?.find(({ name }) => group === name);
-		if (target && _.isArray(target.proxies)) {
+		if (target && Array.isArray(target.proxies)) {
 			target.proxies = dedupProxiesInGroup([
 				...prefix,
 				...target.proxies,
@@ -92,7 +94,7 @@ export class Clash {
 	 */
 	replaceGroupTo = (groupName: string = 'DIRECT', target: string) => {
 		const { source } = this;
-		if (_.isArray(source['proxy-groups'])) {
+		if (Array.isArray(source['proxy-groups'])) {
 			
 			source['proxy-groups'] = source['proxy-groups'].filter(({ name, proxies }) => {
 				proxies?.forEach((_name, index, arr) => {
@@ -103,7 +105,7 @@ export class Clash {
 				return name !== groupName;
 			});
 		}
-		if (_.isArray(source['rules'])) {
+		if (Array.isArray(source['rules'])) {
 			const rules = converters.rulesStrToRulesObject(source.rules);
 			rules.forEach((ruleObject) => {
 				if (ruleObject.proxy === groupName) {
@@ -130,13 +132,13 @@ export class Clash {
 				this.console.log(`type=MATCH时不允许指定tail参数,因为MATCH永远应该在rules的最尾部`);
 				tail = false;
 			}
-			rules.push([type, groupName] as unknown as _RuleObject);
+			rules.push([type, groupName] as unknown as RuleArray);
 		} else if (tail) {
 			if (this.checkExistMatchRule(rules)) {
-				rules.splice(rules.length - 2, 0, [type, value, groupName] as unknown as _RuleObject);
+				rules.splice(rules.length - 2, 0, [type, value, groupName] as unknown as RuleArray);
 			}
 		} else {
-			rules.unshift([type, value, groupName] as unknown as _RuleObject);
+			rules.unshift([type, value, groupName] as unknown as RuleArray);
 		}
 		this.source.rules = rules.map(converters.ruleObjectToRuleStr);
 		return this;
@@ -215,7 +217,6 @@ export class Clash {
 	}
 }
 
-
 export class Group implements CGroup {
 	proxies: string[];
 	interval?: number;
@@ -237,3 +238,9 @@ export class Group implements CGroup {
 		proxies: [],
 	};
 }
+
+// ESM Imports (按重要程度排序: 第三方库 > 内部模块 > 类型)
+import yaml from 'yaml';
+import { converters, dedupProxiesInGroup } from './RuleConverters';
+import { CGroup, ClashConfig, RuleType, RuleArray } from './types/clash';
+import type { YAML } from './types/client';

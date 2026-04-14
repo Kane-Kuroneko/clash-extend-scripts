@@ -3,11 +3,6 @@
  * 只处理两条规则：GEOIP,CN 和 MATCH
  */
 
-import { RoutingConfig } from './RoutingConfig';
-import { Group } from '../ClashConfigBuilder';
-import { SelectorSymbols } from '../RuleConverters';
-import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
-
 export class GlobalRestrictedGroup extends RoutingConfig {
 	presetGroups = {
 		[SelectorSymbols.ManualA]: '🅰️ 自选节点 🅰️',
@@ -128,3 +123,9 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 		);
 	}
 }
+
+// ESM Imports (按重要程度排序: 内部模块 > 类型)
+import { RoutingConfig } from './RoutingConfig';
+import { Group } from '../ClashConfigBuilder';
+import { SelectorSymbols } from '../RuleConverters';
+import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';

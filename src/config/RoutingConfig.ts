@@ -2,11 +2,12 @@
  * 路由配置基类
  */
 
-import _ from 'lodash';
-import { Clash, Group } from '../ClashConfigBuilder';
-import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
-import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
-import type { ClashConfig, ClashProxyItem } from '../types/clash';
+// 原生实现 isPlainObject
+const isPlainObject = (obj: unknown): boolean => {
+	return obj !== null && 
+		typeof obj === 'object' && 
+		Object.prototype.toString.call(obj) === '[object Object]';
+};
 
 export abstract class RoutingConfig extends Clash {
 	proxiesList: string[];
@@ -22,7 +23,7 @@ export abstract class RoutingConfig extends Clash {
 			{ name, url, interval, selected }
 		);
 		
-		if (!_.isPlainObject(source)) {
+		if (!isPlainObject(source)) {
 			console.log(source);
 			throw '参数<source>必须是个clash对象';
 		}
@@ -41,3 +42,9 @@ export abstract class RoutingConfig extends Clash {
 	 */
 	abstract configureGroups(params: ClientParams): void;
 }
+
+// ESM Imports (按重要程度排序: 内部模块 > 类型)
+import { Clash, Group } from '../ClashConfigBuilder';
+import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
+import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
+import type { ClashConfig, ClashProxyItem } from '../types/clash';

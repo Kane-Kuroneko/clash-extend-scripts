@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export const SelectorSymbols = {
 	Auto : Symbol( 'Auto' ) ,
 	Fallback : Symbol( 'Fallback' ) ,
@@ -10,11 +8,11 @@ export const SelectorSymbols = {
 };
 
 export const dedupProxiesInGroup = (proxies:string[]) => {
-	return _.uniq(proxies);
+	return [...new Set(proxies)];
 };
 
 export const converters = {
-	rulesStrToRulesObject(rulesStrList:string[]):_RuleObject[]{
+	rulesStrToRulesObject(rulesStrList:string[]):RuleArray[]{
 		return rulesStrList.map((str) => {
 			const ruleArr = str.split(',');
 			if(ruleArr.length === 2){
@@ -118,10 +116,10 @@ export const converters = {
 				});
 			}
 			
-			return (ruleArr as _RuleObject);
+			return (ruleArr as RuleArray);
 		});
 	},
-	ruleObjectToRuleStr(ruleObject:_RuleObject) : string{
+	ruleObjectToRuleStr(ruleObject:RuleArray) : string{
 		if(typeof ruleObject === 'string'){
 			return ruleObject;
 		}
@@ -180,3 +178,6 @@ namespace ClashRule {
 		}
 	}
 }
+
+// ESM Imports (按重要程度排序)
+import { RuleArray, RuleType } from './types/clash';
