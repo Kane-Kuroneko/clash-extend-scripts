@@ -1,4 +1,4 @@
-import { fetchRules } from './CompileTimeScripts/fetch-rules/index.ts';
+import { fetchRules } from './CompileTimeScripts/fetch-rules';
 
 const rules = await fetchRules();
 const str = JSON.stringify(rules);

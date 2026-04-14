@@ -1,0 +1,12 @@
+{
+	"name": "parser-tests",
+	"version": "1.0.0",
+	"description": "Tests for parser project",
+	"scripts": {
+		"test": "tsx --test tests/**/*.test.ts",
+		"test:build": "tsx tests/build-validation.test.ts",
+		"test:logic": "tsx tests/business-logic.test.ts",
+		"test:main-export": "tsx tests/main-export.test.ts"
+	},
+	"type": "module"
+}

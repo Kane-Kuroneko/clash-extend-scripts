@@ -6,7 +6,11 @@
 		"build:cvr:global": "tsx ./webpack.base.ts cvr global-proxy",
 		"build:cvr:auto": "tsx ./webpack.base.ts cvr auto-routing",
 		"build:party:global": "tsx ./webpack.base.ts clash-party global-proxy",
-		"build:party:auto": "tsx ./webpack.base.ts clash-party auto-routing"
+		"build:party:auto": "tsx ./webpack.base.ts clash-party auto-routing",
+		"test": "tsx tests/run-all-tests.ts",
+		"test:integration": "tsx --test tests/integration.test.ts",
+		"test:all": "npm run build:all && npm test",
+		"build:all": "npm run build:cfw:global && npm run build:cvr:global && npm run build:party:global && npm run build:cvr:auto && npm run build:party:auto"
 	},
 	"dependencies": {
 		"lodash": "^4.17.23",
