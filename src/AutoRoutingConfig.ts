@@ -35,6 +35,8 @@ export class AutoRoutingGroup extends Clash {
 		'download' : '📥 Download' ,
 		// 漏网之鱼
 		'final' : '🐟 Final' ,
+		// 直连分组(可选DIRECT/REJECT/代理)
+		'direct-group' : '🟢 China Direct' ,
 	};
 	
 	/**
@@ -85,6 +87,18 @@ export class AutoRoutingGroup extends Clash {
 				proxies : [
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
+					...this.proxiesList ,
+				] ,
+			} ) ,
+			// 直连分组(可选DIRECT/REJECT/代理节点)
+			new Group( {
+				name : this.presetGroups['direct-group'] ,
+				type : 'select' ,
+				proxies : [
+					this.presetGroups[SelectorSymbols.Direct] ,
+					this.presetGroups[SelectorSymbols.Reject] ,
+					this.presetGroups[SelectorSymbols.ManualA] ,
+					this.presetGroups[SelectorSymbols.ManualB] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
@@ -223,7 +237,16 @@ export class AutoRoutingGroup extends Clash {
 			rules.push(`${type},${value},${this.presetGroups['gfw']}`);
 		});
 		
-		// 9. 添加Final规则(漏网之鱼)
+		// 9. 直连域名规则 -> China Direct分组 (高频国内站点优先匹配)
+		const directRules = __CompileTime_Rules__.Loyalsoldier_Direct.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['direct-group']}`
+		);
+		rules.push(...directRules);
+		
+		// 10. GEOIP,CN -> China Direct分组 (覆盖未在直连列表中的国内IP)
+		rules.push(`GEOIP,CN,${this.presetGroups['direct-group']}`);
+		
+		// 11. 添加Final规则(漏网之鱼)
 		rules.push(`MATCH,${this.presetGroups['final']}`);
 		
 		this.source.rules = rules;
