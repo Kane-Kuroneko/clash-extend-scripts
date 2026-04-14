@@ -3,6 +3,11 @@
  * 处理不同客户端的入口函数差异
  */
 
+// ESM Imports (类型导入)
+import type { RoutingMode } from '../types/build';
+import type { ClientDependencies, ClientParams } from '../types/client';
+import type { ClashConfig } from '../types/clash';
+
 export abstract class ClientAdapter {
 	protected mode: RoutingMode;
 	
@@ -31,8 +36,3 @@ export abstract class ClientAdapter {
 	 */
 	abstract main(config?: Partial<ClashConfig>, profileName?: string): Partial<ClashConfig> | void;
 }
-
-// ESM Imports (类型导入)
-import type { RoutingMode } from '../types/build';
-import type { ClientDependencies, ClientParams } from '../types/client';
-import type { ClashConfig } from '../types/clash';

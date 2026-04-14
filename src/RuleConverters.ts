@@ -1,3 +1,6 @@
+// ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
+import { RuleArray, RuleType } from './types/clash';
+
 export const SelectorSymbols = {
 	Auto : Symbol( 'Auto' ) ,
 	Fallback : Symbol( 'Fallback' ) ,
@@ -178,6 +181,3 @@ namespace ClashRule {
 		}
 	}
 }
-
-// ESM Imports (按重要程度排序)
-import { RuleArray, RuleType } from './types/clash';

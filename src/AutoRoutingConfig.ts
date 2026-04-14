@@ -4,6 +4,13 @@
  * 自动路由模式配置
  * 基于 Loyalsoldier/clash-rules 规则源
  */
+
+// ESM Imports (按重要程度排序: 业务模块 > 类型)
+import { ClashConfig, RuleType } from './types/clash';
+import { SelectorSymbols, converters } from './RuleConverters';
+import { Clash, Group } from './ClashConfigBuilder';
+import type { YAML } from './types/client';
+
 export class AutoRoutingGroup extends Clash {
 	presetGroups = {
 		[SelectorSymbols.Direct] : 'DIRECT' ,
@@ -223,14 +230,6 @@ export class AutoRoutingGroup extends Clash {
 	}
 	
 }
-
-import {
-	ClashConfig ,
-	RuleType,
-} from "./types/clash";
-import { SelectorSymbols, converters } from './RuleConverters';
-import { Clash, Group } from './ClashConfigBuilder';
-import type { YAML } from "./types/client";
 
 /**
  * 警告!

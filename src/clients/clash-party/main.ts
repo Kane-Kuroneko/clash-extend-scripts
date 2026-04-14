@@ -1,6 +1,9 @@
 // Clash Party Override Script Entry Point
 // 基于 Clash Party (Mihomo Party) 的覆写脚本规范
 
+// ESM Imports
+import { ClashPartyAdapter } from '../../adapters/ClashPartyAdapter';
+
 // __ROUTING_MODE__ 会在构建时通过 DefinePlugin 注入
 const adapter = new ClashPartyAdapter(__ROUTING_MODE__);
 
@@ -18,6 +21,3 @@ export function main(config?) {
 
 // 防止 webpack 优化掉 main 函数
 main;
-
-// ESM Imports
-import { ClashPartyAdapter } from '../../adapters/ClashPartyAdapter';

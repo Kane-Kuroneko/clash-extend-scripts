@@ -1,3 +1,9 @@
+// ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
+import yaml from 'yaml';
+import { converters, dedupProxiesInGroup } from './RuleConverters';
+import { CGroup, ClashConfig, RuleType, RuleArray } from './types/clash';
+import type { YAML } from './types/client';
+
 // 原生实现 isPlainObject
 const isPlainObject = (obj: unknown): boolean => {
 	return obj !== null && 
@@ -238,9 +244,3 @@ export class Group implements CGroup {
 		proxies: [],
 	};
 }
-
-// ESM Imports (按重要程度排序: 第三方库 > 内部模块 > 类型)
-import yaml from 'yaml';
-import { converters, dedupProxiesInGroup } from './RuleConverters';
-import { CGroup, ClashConfig, RuleType, RuleArray } from './types/clash';
-import type { YAML } from './types/client';

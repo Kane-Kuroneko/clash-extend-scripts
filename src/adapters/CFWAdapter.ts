@@ -2,6 +2,12 @@
  * CFW 客户端适配器
  */
 
+// ESM Imports (按重要程度排序: 业务模块 > 类型)
+import { ClientAdapter } from './ClientAdapter';
+import { ConfigFactory } from '../config/ConfigFactory';
+import type { RoutingMode } from '../types/build';
+import type { ClientDependencies, ClientParams } from '../types/client';
+
 export class CFWAdapter extends ClientAdapter {
 	constructor(mode: RoutingMode) {
 		super(mode);
@@ -33,9 +39,3 @@ export class CFWAdapter extends ClientAdapter {
 		throw new Error('CFW 客户端不支持 main 函数');
 	}
 }
-
-// ESM Imports (按重要程度排序: 内部模块 > 类型)
-import { ClientAdapter } from './ClientAdapter';
-import { ConfigFactory } from '../config/ConfigFactory';
-import type { RoutingMode } from '../types/build';
-import type { ClientDependencies, ClientParams } from '../types/client';

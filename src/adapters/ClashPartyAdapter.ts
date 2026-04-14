@@ -2,6 +2,15 @@
  * Clash Party 客户端适配器
  */
 
+// ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
+import yaml from 'yaml';
+import { Nothing } from 'nothing-mock';
+import { ClientAdapter } from './ClientAdapter';
+import { ConfigFactory } from '../config/ConfigFactory';
+import type { RoutingMode } from '../types/build';
+import type { ClientDependencies, ClientParams } from '../types/client';
+import type { ClashConfig } from '../types/clash';
+
 export interface ClashPartyConfig extends ClashConfig {
 	/**
 	 * 代理提供者配置
@@ -161,12 +170,3 @@ export class ClashPartyAdapter extends ClientAdapter {
 		return globalConf.source;
 	}
 }
-
-// ESM Imports (按重要程度排序: 第三方库 > 内部模块 > 类型)
-import yaml from 'yaml';
-import { Nothing } from 'nothing-mock';
-import { ClientAdapter } from './ClientAdapter';
-import { ConfigFactory } from '../config/ConfigFactory';
-import type { RoutingMode } from '../types/build';
-import type { ClientDependencies, ClientParams } from '../types/client';
-import type { ClashConfig } from '../types/clash';

@@ -2,6 +2,12 @@
  * 路由配置基类
  */
 
+// ESM Imports (按重要程度排序: 业务模块 > 类型)
+import { Clash, Group } from '../ClashConfigBuilder';
+import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
+import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
+import type { ClashConfig, ClashProxyItem } from '../types/clash';
+
 // 原生实现 isPlainObject
 const isPlainObject = (obj: unknown): boolean => {
 	return obj !== null && 
@@ -42,9 +48,3 @@ export abstract class RoutingConfig extends Clash {
 	 */
 	abstract configureGroups(params: ClientParams): void;
 }
-
-// ESM Imports (按重要程度排序: 内部模块 > 类型)
-import { Clash, Group } from '../ClashConfigBuilder';
-import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
-import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
-import type { ClashConfig, ClashProxyItem } from '../types/clash';

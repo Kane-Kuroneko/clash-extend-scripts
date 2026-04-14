@@ -3,6 +3,12 @@
  * 根据分流模式返回对应的配置实例
  */
 
+// ESM Imports (按重要程度排序: 业务模块 > 类型)
+import { AutoRoutingGroup } from '../AutoRoutingConfig';
+import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
+import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
+import type { RoutingMode } from '../types/build';
+
 export class ConfigFactory {
 	/**
 	 * 根据模式创建配置实例
@@ -23,9 +29,3 @@ export class ConfigFactory {
 		}
 	}
 }
-
-// ESM Imports (按重要程度排序: 内部模块 > 类型)
-import { AutoRoutingGroup } from '../AutoRoutingConfig';
-import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
-import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
-import type { RoutingMode } from '../types/build';
