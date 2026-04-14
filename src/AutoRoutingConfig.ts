@@ -6,10 +6,8 @@
  */
 export class AutoRoutingGroup extends Clash {
 	presetGroups = {
-		[SelectorSymbols.Auto] : '♻️ Auto' ,
-		[SelectorSymbols.Fallback] : '🪓 Fallback' ,
-		[SelectorSymbols.Direct] : 'Bypass' ,
-		[SelectorSymbols.Reject] : 'Block' ,
+		[SelectorSymbols.Direct] : 'DIRECT' ,
+		[SelectorSymbols.Reject] : 'REJECT' ,
 		[SelectorSymbols.ManualA] : '🫧 Proxy A 🫧' ,
 		[SelectorSymbols.ManualB] : '🍀 Proxy B 🍀' ,
 		// GFW屏蔽的站点
@@ -59,8 +57,6 @@ export class AutoRoutingGroup extends Clash {
 		
 		// 添加分组
 		this.addManualGroups( { name , url , interval , selected } );
-		this.addAutoSelect( { name , url , interval , selected } );
-		this.addFallback( { name , url , interval , selected } );
 		this.addDistributionGroups( { name , url , interval , selected } );
 	}
 	
@@ -74,8 +70,6 @@ export class AutoRoutingGroup extends Clash {
 				proxies : [
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
-					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
@@ -84,8 +78,6 @@ export class AutoRoutingGroup extends Clash {
 				proxies : [
 					this.presetGroups[SelectorSymbols.Reject] ,
 					this.presetGroups[SelectorSymbols.Direct] ,
-					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
@@ -97,8 +89,6 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
-					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
@@ -110,8 +100,6 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
-					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
@@ -123,50 +111,10 @@ export class AutoRoutingGroup extends Clash {
 					this.presetGroups[SelectorSymbols.Direct] ,
 					this.presetGroups[SelectorSymbols.ManualA] ,
 					this.presetGroups[SelectorSymbols.ManualB] ,
-					this.presetGroups[SelectorSymbols.Auto] ,
-					this.presetGroups[SelectorSymbols.Fallback] ,
 					...this.proxiesList ,
 				] ,
 			} ) ,
 		);
-	}
-	
-	/**
-	 * 添加自动选择分组
-	 */
-	addAutoSelect( { name , url , interval , selected } ) {
-		this.addGroups(
-			new Group( {
-				name : this.presetGroups[SelectorSymbols.Auto] ,
-				type : 'url-test' ,
-				proxies : [
-					this.presetGroups[SelectorSymbols.Reject] ,
-					this.presetGroups[SelectorSymbols.Direct] ,
-					...this.proxiesList ,
-				] ,
-				url : 'http://www.gstatic.com/generate_204' ,
-				interval : 180 ,
-			} ) ,
-		);
-	}
-	
-	/**
-	 * 添加Fallback分组
-	 */
-	addFallback( { name , url , interval , selected } ) {
-		this.console.log( url );
-		this.console.log( interval );
-		this.addGroups( new Group( {
-			name : this.presetGroups[SelectorSymbols.Fallback] ,
-			type : 'fallback' ,
-			proxies : [
-				this.presetGroups[SelectorSymbols.Reject] ,
-				this.presetGroups[SelectorSymbols.Direct] ,
-				...this.proxiesList ,
-			] ,
-			url : 'http://www.gstatic.com/generate_204' ,
-			interval : 180 ,
-		} ) );
 	}
 	
 	/**
@@ -174,8 +122,8 @@ export class AutoRoutingGroup extends Clash {
 	 */
 	addDistributionGroups( { name , url , interval , selected } ) {
 		const _proxies = [
-			this.presetGroups[SelectorSymbols.Direct] ,
 			this.presetGroups[SelectorSymbols.Reject] ,
+			this.presetGroups[SelectorSymbols.Direct] ,
 			this.presetGroups[SelectorSymbols.ManualA] ,
 			this.presetGroups[SelectorSymbols.ManualB] ,
 			...this.proxiesList ,
