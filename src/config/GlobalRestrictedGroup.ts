@@ -11,13 +11,10 @@ import type { ClientDependencies, ClientParams, ClientSource } from '../types/cl
 
 export class GlobalRestrictedGroup extends RoutingConfig {
 	presetGroups = {
-		[SelectorSymbols.ManualA]: '🅰️ 自选节点 🅰️',
-		'China-Geo-IP': '🇨🇳 大陆Geo-IP',
-		[SelectorSymbols.Fallback]: '🛡️ 后备线路',
-		[SelectorSymbols.Direct]: '🟢 Bypass',
-		[SelectorSymbols.Reject]: '🔴 Block',
-		[SelectorSymbols.LoadBalanceHash]: '⚖️ 负载均衡-散列',
-		[SelectorSymbols.LoadBalanceRound]: '⚖️ 负载均衡-轮询',
+		[SelectorSymbols.ManualA]: '🫧 Global Proxy 🫧',
+		'China-Geo-IP': '❄️ China Geo-IP ❄️',
+		[SelectorSymbols.Direct]: 'DIRECT',
+		[SelectorSymbols.Reject]: 'REJECT',
 	};
 	
 	constructor(
@@ -30,6 +27,13 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 			{ axios, yaml, notify, console },
 			{ name, url, interval, selected }
 		);
+		
+		// 移除预设的 GLOBAL 分组（Clash Party 自带）
+		if (Array.isArray(source['proxy-groups'])) {
+			source['proxy-groups'] = source['proxy-groups'].filter(
+				group => group.name.toUpperCase() !== 'GLOBAL'
+			);
+		}
 		
 		// 配置简单规则
 		this.source['rules'] = [
@@ -46,9 +50,8 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 	}
 	
 	configureGroups({ name, url, interval, selected }: ClientParams): void {
+		// 添加手动选择组
 		this.addManualSelect({ name, url, interval, selected });
-		this.addLoadBalance({ name, url, interval, selected });
-		this.addFallback({ name, url, interval, selected });
 	}
 	
 	addManualSelect({ name, url, interval, selected }: ClientParams) {
@@ -59,9 +62,6 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 				proxies: [
 					this.presetGroups[SelectorSymbols.Reject],
 					this.presetGroups[SelectorSymbols.Direct],
-					this.presetGroups[SelectorSymbols.LoadBalanceHash],
-					this.presetGroups[SelectorSymbols.LoadBalanceRound],
-					this.presetGroups[SelectorSymbols.Fallback],
 					...this.proxiesList,
 				],
 			})
@@ -75,57 +75,10 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 					this.presetGroups[SelectorSymbols.Reject],
 					this.presetGroups[SelectorSymbols.Direct],
 					this.presetGroups[SelectorSymbols.ManualA],
-					this.presetGroups[SelectorSymbols.LoadBalanceHash],
-					this.presetGroups[SelectorSymbols.LoadBalanceRound],
-					this.presetGroups[SelectorSymbols.Fallback],
 					...this.proxiesList,
 				],
 			})
 		);
 	}
 	
-	addLoadBalance({ name, url, interval, selected }: ClientParams) {
-		this.addGroups(
-			new Group({
-				name: this.presetGroups[SelectorSymbols.LoadBalanceHash],
-				type: 'load-balance',
-				strategy: 'consistent-hashing',
-				proxies: [
-					this.presetGroups[SelectorSymbols.Reject],
-					this.presetGroups[SelectorSymbols.Direct],
-					...this.proxiesList,
-				],
-				url: 'http://www.gstatic.com/generate_204',
-				interval: 180,
-			}),
-			new Group({
-				name: this.presetGroups[SelectorSymbols.LoadBalanceRound],
-				type: 'load-balance',
-				strategy: 'round-robin',
-				proxies: [
-					this.presetGroups[SelectorSymbols.Reject],
-					this.presetGroups[SelectorSymbols.Direct],
-					...this.proxiesList,
-				],
-				url: 'http://www.gstatic.com/generate_204',
-				interval: 180,
-			})
-		);
-	}
-	
-	addFallback({ name, url, interval, selected }: ClientParams) {
-		this.addGroups(
-			new Group({
-				name: this.presetGroups[SelectorSymbols.Fallback],
-				type: 'fallback',
-				proxies: [
-					this.presetGroups[SelectorSymbols.Reject],
-					this.presetGroups[SelectorSymbols.Direct],
-					...this.proxiesList,
-				],
-				url: 'http://www.gstatic.com/generate_204',
-				interval: 180,
-			})
-		);
-	}
 }

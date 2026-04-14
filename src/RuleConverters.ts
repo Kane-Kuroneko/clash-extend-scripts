@@ -3,7 +3,6 @@ import { RuleArray, RuleType } from './types/clash';
 
 export const SelectorSymbols = {
 	Auto : Symbol( 'Auto' ) ,
-	Fallback : Symbol( 'Fallback' ) ,
 	ManualA : Symbol( 'Manual-A' ) ,
 	ManualB : Symbol( 'Manual-B' ) ,
 	Direct : Symbol( 'DIRECT' ) ,

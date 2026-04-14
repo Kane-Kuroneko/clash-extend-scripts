@@ -160,6 +160,10 @@ async function fetchWithRetry<T>(
  * 保留高频国内站点,去除长尾域名
  */
 function smartFilterDirectDomains(domains: string[]): string[] {
+	console.log(`[smartFilterDirectDomains] 原始域名数量: ${domains.length}`);
+	
+	const maxDomains = 5000;
+	
 	// 常见国内服务关键词(高优先级)
 	const priorityKeywords = [
 		'baidu', 'alipay', 'taobao', 'tmall', 'jd', 'weixin', 'qq', 'wechat',
@@ -172,29 +176,28 @@ function smartFilterDirectDomains(domains: string[]): string[] {
 		'sf-express', 'sto', 'yto', 'yunda', 'zto',
 	];
 	
-	// 策略1: 优先保留包含关键词的域名
-	const priorityDomains = domains.filter(domain => 
-		priorityKeywords.some(keyword => domain.toLowerCase().includes(keyword))
-	);
+	// 策略1: 优先保留包含关键词的域名(限制3000条)
+	const maxPriority = 3000;
+	const priorityDomains = domains
+		.filter(domain => 
+			priorityKeywords.some(keyword => domain.toLowerCase().includes(keyword))
+		)
+		.slice(0, maxPriority);
+	console.log(`[smartFilterDirectDomains] 策略1-关键词匹配: ${priorityDomains.length} 条`);
 	
-	// 策略2: 保留短域名(长度 <= 20 的域名,通常是主流站点)
-	const shortDomains = domains.filter(domain => 
-		domain.length <= 20 && !priorityDomains.includes(domain)
-	);
+	// 策略2: 保留短域名(长度 <= 15 的域名,限制1500条)
+	const prioritySet = new Set(priorityDomains); // 使用 Set 提升性能
+	const maxShort = maxDomains - priorityDomains.length;
+	const shortDomains = domains
+		.filter(domain => 
+			domain.length <= 15 && !prioritySet.has(domain)
+		)
+		.slice(0, maxShort);
+	console.log(`[smartFilterDirectDomains] 策略2-短域名: ${shortDomains.length} 条`);
 	
-	// 策略3: 如果还不够,补充剩余域名(限制总数)
-	const maxDomains = 5000;
-	const remainingSlots = maxDomains - priorityDomains.length - shortDomains.length;
-	
-	if (remainingSlots > 0) {
-		const otherDomains = domains.filter(domain => 
-			!priorityDomains.includes(domain) && !shortDomains.includes(domain)
-		).slice(0, remainingSlots);
-		
-		return [...priorityDomains, ...shortDomains, ...otherDomains];
-	}
-	
-	return [...priorityDomains, ...shortDomains];
+	const result = [...priorityDomains, ...shortDomains];
+	console.log(`[smartFilterDirectDomains] 最终筛选结果: ${result.length} 条`);
+	return result;
 }
 
 type ResContents = {

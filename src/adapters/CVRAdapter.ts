@@ -3,7 +3,6 @@
  */
 
 // ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
-import yaml from 'yaml';
 import { Nothing } from 'nothing-mock';
 import { ClientAdapter } from './ClientAdapter';
 import { ConfigFactory } from '../config/ConfigFactory';
@@ -26,7 +25,7 @@ export class CVRAdapter extends ClientAdapter {
 		const globalConf = ConfigFactory.createConfig(
 			this.mode,
 			{ source: config, raw: null },
-			{ axios: Nothing, yaml, notify: Nothing, console },
+			{ axios: Nothing, yaml: Nothing, notify: Nothing, console },
 			{ name: undefined, url: undefined, interval: undefined, selected: undefined }
 		);
 		

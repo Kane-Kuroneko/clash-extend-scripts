@@ -51,7 +51,8 @@ if (!clientArg || !modeArg) {
 console.log(`构建配置: client=${clientArg}, mode=${modeArg}`);
 
 // 异步获取编译时规则
-const compileTimeRules = await fetchRules();
+// global-proxy 模式不需要规则数据，只有 auto-routing 模式才需要
+const compileTimeRules = modeArg === 'auto-routing' ? await fetchRules() : {};
 const path = await import('path');
 const { fileURLToPath } = await import('url');
 const __filename = fileURLToPath(import.meta.url);

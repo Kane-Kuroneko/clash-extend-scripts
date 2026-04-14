@@ -1,5 +1,4 @@
 // ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
-import yaml from 'yaml';
 import { converters, dedupProxiesInGroup } from './RuleConverters';
 import { CGroup, ClashConfig, RuleType, RuleArray } from './types/clash';
 import type { YAML } from './types/client';
@@ -47,7 +46,22 @@ export class Clash {
 		if (!this.source['proxy-groups']) {
 			this.source['proxy-groups'] = [];
 		}
-		this.source['proxy-groups'].push(...groups);
+		
+		// 去重：检查是否已存在同名组
+		const existingNames = new Set(
+			this.source['proxy-groups'].map(g => g.name)
+		);
+		
+		const uniqueGroups = groups.filter(group => {
+			if (existingNames.has(group.name)) {
+				console.log(`⚠️ 跳过重复的代理组: ${group.name}`);
+				return false;
+			}
+			existingNames.add(group.name);
+			return true;
+		});
+		
+		this.source['proxy-groups'].push(...uniqueGroups);
 	}
 	
 	renameGroup = (name: string, newName: string) => {
@@ -219,6 +233,9 @@ export class Clash {
 	}
 	
 	get raw() {
+		if (!this.yaml || this.yaml === 'undefined') {
+			throw new Error('YAML library is not available. This method is only supported in CFW environment.');
+		}
 		return this.yaml.stringify(this.source);
 	}
 }
@@ -228,7 +245,7 @@ export class Group implements CGroup {
 	interval?: number;
 	strategy?: "consistent-hashing" | "round-robin";
 	name: string;
-	type: "select" | "url-test" | "fallback" | "load-balance";
+	type: "select" | "url-test" | "load-balance";
 	url?: string;
 
 	constructor(conf: Partial<CGroup>) {

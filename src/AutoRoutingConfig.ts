@@ -1,5 +1,3 @@
-
-
 /**
  * 自动路由模式配置
  * 基于 Loyalsoldier/clash-rules 规则源
@@ -55,6 +53,7 @@ export class AutoRoutingGroup extends Clash {
 			{ axios , yaml , notify , console } ,
 			{ name , url , interval , selected } ,
 		);
+		
 		// proxy-groups 和 rules 已在 Clash 基类中清空，此处不需要再次清空
 		// 注意：不能重新赋值 this.source = source，否则会覆盖基类中已清空的配置
 		this.console = console;

@@ -15,7 +15,7 @@ export interface ClashProxyItem {
 
 export interface CGroup {
 	name: string;
-	type: "select" | "url-test" | "fallback" | "load-balance";
+	type: "select" | "url-test" | "load-balance";
 	proxies: string[];
 	url?: string;
 	interval?: number;
@@ -50,11 +50,6 @@ export interface ClashConfig {
 		"fake-ip-range": string;
 		"use-hosts": boolean;
 		nameserver: string[];
-		fallback: string[];
-		"fallback-filter": {
-			geoip: boolean;
-			ipcidr: string[];
-		};
 	};
 	proxies: ClashProxyItem[];
 	"proxy-groups": CGroup[];
