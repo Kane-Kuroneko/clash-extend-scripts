@@ -11,7 +11,10 @@ console.log('在虚拟 Clash 客户端环境中运行真实业务逻辑测试\n'
 
 // 运行所有测试文件
 const testFiles = [
-	'integration.test.ts',  // 集成测试（核心）
+	'rule-converters.test.ts',     // 规则转换器单元测试
+	'clash-config-builder.test.ts', // 配置构建器单元测试
+	'config-factory.test.ts',       // 配置工厂单元测试
+	'integration.test.ts',          // 集成测试（核心）
 ];
 
 let allPassed = true;
