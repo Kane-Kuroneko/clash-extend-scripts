@@ -89,11 +89,14 @@ export type RuleArray =
 		type?: keyof typeof RuleType;
 		value?: string;
 		proxy?: string;
+		resolve?: 'no-resolve';
 		length?: 3;
 	} )
 	| ( [ keyof typeof RuleType, string? ] & {
 		type?: keyof typeof RuleType;
+		value?: string;
 		proxy?: string;
+		resolve?: 'no-resolve';
 		length?: 2;
 	} )
 	| ( [ keyof typeof RuleType, string?, string?, 'no-resolve'? ] & {

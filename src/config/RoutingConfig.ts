@@ -7,13 +7,7 @@ import { Clash, Group } from '../ClashConfigBuilder';
 import { SelectorSymbols, converters, dedupProxiesInGroup } from '../RuleConverters';
 import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
 import type { ClashConfig, ClashProxyItem } from '../types/clash';
-
-// 原生实现 isPlainObject
-const isPlainObject = (obj: unknown): boolean => {
-	return obj !== null && 
-		typeof obj === 'object' && 
-		Object.prototype.toString.call(obj) === '[object Object]';
-};
+import { isPlainObject } from '../utils';
 
 export abstract class RoutingConfig extends Clash {
 	proxiesList: string[];

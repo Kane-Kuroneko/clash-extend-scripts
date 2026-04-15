@@ -5,16 +5,16 @@
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
-import { ConfigFactory } from '../src/config/ConfigFactory';
-import { AutoRoutingGroup } from '../src/AutoRoutingConfig';
-import { GlobalRestrictedGroup } from '../src/config/GlobalRestrictedGroup';
+import { ConfigFactory } from './ConfigFactory';
+import { AutoRoutingGroup } from '../AutoRoutingConfig';
+import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
 
 // Mock 编译时规则数据(在模块加载前注入)
 const mockCompileTimeRules = {
 	Loyalsoldier_GFW: ['google.com', 'facebook.com', 'twitter.com'],
 	Loyalsoldier_Proxy: ['netflix.com', 'youtube.com', 'spotify.com'],
 	Loyalsoldier_Telegram: ['telegram.org', 't.me'],
-	Loyalsoldier_Microsoft: ['microsoft.com', 'windows.com', 'office.com'],
+	Microsoft: ['DOMAIN-SUFFIX,microsoft.com', 'DOMAIN-SUFFIX,office.com', 'DOMAIN-KEYWORD,windows'],
 	Loyalsoldier_Apple: ['apple.com', 'icloud.com'],
 	Loyalsoldier_Direct: ['baidu.com', 'qq.com', 'taobao.com'],
 	CN_bilibili: ['bilibili.com'],

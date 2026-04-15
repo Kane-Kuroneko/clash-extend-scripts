@@ -7,9 +7,9 @@ export const fetchRules = async () => {
 		Loyalsoldier_GFW_result,
 		Loyalsoldier_Proxy_result,
 		Loyalsoldier_Telegram_result,
-		Loyalsoldier_Microsoft_result,
 		Loyalsoldier_Apple_result,
 		Loyalsoldier_Direct_result,
+		Microsoft_result,
 	] = await Promise.all([
 		fetchWithRetry('CN_bilibili', () => fetchGithubRules(CN_bilibili)),
 		fetchWithRetry('INTL_bilibili', () => fetchGithubRules(INTL_bilibili)),
@@ -17,9 +17,9 @@ export const fetchRules = async () => {
 		fetchWithRetry('Loyalsoldier_GFW', () => fetchLoyalsoldierRules(Loyalsoldier_GFW)),
 		fetchWithRetry('Loyalsoldier_Proxy', () => fetchLoyalsoldierRules(Loyalsoldier_Proxy)),
 		fetchWithRetry('Loyalsoldier_Telegram', () => fetchLoyalsoldierRules(Loyalsoldier_Telegram)),
-		fetchWithRetry('Loyalsoldier_Microsoft', () => fetchLoyalsoldierRules(Loyalsoldier_Microsoft)),
 		fetchWithRetry('Loyalsoldier_Apple', () => fetchLoyalsoldierRules(Loyalsoldier_Apple)),
 		fetchWithRetry('Loyalsoldier_Direct', () => fetchLoyalsoldierDirect(Loyalsoldier_Direct_Filtered)),
+		fetchWithRetry('Microsoft', () => fetchMicrosoftRules(Microsoft_Rules)),
 	]);
 
 	return {
@@ -29,9 +29,9 @@ export const fetchRules = async () => {
 		Loyalsoldier_GFW: Loyalsoldier_GFW_result,
 		Loyalsoldier_Proxy: Loyalsoldier_Proxy_result,
 		Loyalsoldier_Telegram: Loyalsoldier_Telegram_result,
-		Loyalsoldier_Microsoft: Loyalsoldier_Microsoft_result,
 		Loyalsoldier_Apple: Loyalsoldier_Apple_result,
 		Loyalsoldier_Direct: Loyalsoldier_Direct_result,
+		Microsoft: Microsoft_result,
 	};
 }
 
@@ -39,9 +39,17 @@ export const fetchGithubRules = (url:string) => fetch( url , {
 	// mode : 'no-cors',
 	headers : {
 		"Accept" : "application/vnd.github.v3+json",
+		"User-Agent" : "Clash-Parser/1.0"  // 添加 User-Agent 避免被拒绝
 	},
+	// 增加超时控制
+	signal: AbortSignal.timeout(30000)  // 30秒超时
 } ).
-then( res => res.text() ).
+then( res => {
+	if (!res.ok) {
+		throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+	}
+	return res.text();
+} ).
 then( ( text ) => {
 	const json: ResContents = parse( text );
 	return json.payload;
@@ -52,8 +60,18 @@ then( ( text ) => {
  * 直接从raw.githubusercontent.com获取YAML文件
  * 只保留DOMAIN相关规则,过滤掉IP-CIDR规则
  */
-export const fetchLoyalsoldierRules = (url: string) => fetch(url)
-	.then(res => res.text())
+export const fetchLoyalsoldierRules = (url: string) => fetch(url, {
+	headers: {
+		"User-Agent" : "Clash-Parser/1.0"
+	},
+	signal: AbortSignal.timeout(30000)  // 30秒超时
+})
+	.then(res => {
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+		}
+		return res.text();
+	})
 	.then(text => {
 		// 解析YAML格式的规则文件
 		const yaml: ResContents = parse(text);
@@ -88,8 +106,18 @@ export const fetchLoyalsoldierRules = (url: string) => fetch(url)
  * 2. 保留常见国内服务关键词
  * 3. 限制总数量在 5000 条以内
  */
-export const fetchLoyalsoldierDirect = (url: string) => fetch(url)
-	.then(res => res.text())
+export const fetchLoyalsoldierDirect = (url: string) => fetch(url, {
+	headers: {
+		"User-Agent" : "Clash-Parser/1.0"
+	},
+	signal: AbortSignal.timeout(30000)  // 30秒超时
+})
+	.then(res => {
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+		}
+		return res.text();
+	})
 	.then(text => {
 		const yaml: ResContents = parse(text);
 		if (!yaml.payload || !Array.isArray(yaml.payload)) return [];
@@ -119,15 +147,49 @@ export const fetchLoyalsoldierDirect = (url: string) => fetch(url)
 	});
 
 /**
+ * 获取 Microsoft 规则
+ * 从 clash-rules-lite 仓库获取 Microsoft 相关域名规则
+ * 支持 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX 格式
+ */
+export const fetchMicrosoftRules = (url: string) => fetch(url, {
+	headers: {
+		"User-Agent" : "Clash-Parser/1.0"
+	},
+	signal: AbortSignal.timeout(30000)  // 30秒超时
+})
+	.then(res => {
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+		}
+		return res.text();
+	})
+	.then(text => {
+		const yaml: ResContents = parse(text);
+		if (!yaml.payload || !Array.isArray(yaml.payload)) return [];
+		
+		// 返回完整的规则字符串(包括 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX)
+		return yaml.payload
+			.filter(rule => {
+				// 过滤掉 IP-CIDR 规则
+				return !rule.startsWith('IP-CIDR,') && !rule.startsWith('IP-CIDR6,');
+			})
+			.map(rule => {
+				// 提取规则部分(去掉前面的 '- ' 如果存在)
+				const cleanedRule = rule.startsWith('- ') ? rule.substring(2) : rule;
+				return cleanedRule;
+			});
+	});
+
+/**
  * 带重试机制的 fetch 包装器
  * @param name 规则名称(用于日志)
  * @param fetchFn 获取规则的函数
- * @param maxRetries 最大重试次数(默认3次)
+ * @param maxRetries 最大重试次数(默认5次)
  */
 async function fetchWithRetry<T>(
 	name: string,
 	fetchFn: () => Promise<T>,
-	maxRetries: number = 3
+	maxRetries: number = 5
 ): Promise<T> {
 	let lastError: Error | null = null;
 	
@@ -144,7 +206,7 @@ async function fetchWithRetry<T>(
 			
 			// 如果不是最后一次尝试,等待一段时间后重试
 			if (attempt < maxRetries) {
-				const delay = 1000 * attempt; // 递增延迟: 1s, 2s, 3s
+				const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // 指数退避: 1s, 2s, 4s, 8s, 最大10s
 				console.log(`   等待 ${delay}ms 后重试...`);
 				await new Promise(resolve => setTimeout(resolve, delay));
 			}
@@ -213,11 +275,14 @@ import { Blocked_By_GFW } from './blocked-by-gfw';
 // Loyalsoldier/clash-rules 规则源 URL (release分支)
 const LOYALSOLDIER_BASE = 'https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release';
 
+// 其他规则源
+const CLASH_RULES_LITE_BASE = 'https://raw.githubusercontent.com/zhanyeye/clash-rules-lite/main';
+
 export const Loyalsoldier_GFW = `${LOYALSOLDIER_BASE}/gfw.txt`;
 export const Loyalsoldier_Proxy = `${LOYALSOLDIER_BASE}/proxy.txt`;
 export const Loyalsoldier_Direct = `${LOYALSOLDIER_BASE}/direct.txt`; // 直连域名列表(需配合筛选)
-export const Loyalsoldier_Telegram = `${LOYALSOLDIER_BASE}/telegram.txt`;
-export const Loyalsoldier_Microsoft = `${LOYALSOLDIER_BASE}/microsoft.txt`;
+export const Loyalsoldier_Telegram = `${LOYALSOLDIER_BASE}/telegramcidr.txt`; // Telegram IP 地址列表
 export const Loyalsoldier_Apple = `${LOYALSOLDIER_BASE}/apple.txt`;
 export const Loyalsoldier_Direct_Filtered = `${LOYALSOLDIER_BASE}/direct.txt`; // 智能筛选版直连规则
+export const Microsoft_Rules = `${CLASH_RULES_LITE_BASE}/microsoft-rules.txt`; // Microsoft 规则
 // export const Loyalsoldier_Reject = `${LOYALSOLDIER_BASE}/reject.txt`; // 已移除,174K条规则太大

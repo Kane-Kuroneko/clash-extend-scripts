@@ -5,9 +5,9 @@
 
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { Clash, Group } from '../src/ClashConfigBuilder';
-import { converters } from '../src/RuleConverters';
-import type { ClashConfig } from '../src/types/clash';
+import { Clash, Group } from './ClashConfigBuilder';
+import { converters } from './RuleConverters';
+import type { ClashConfig } from './types/clash';
 
 /**
  * 创建测试用的 Clash 实例

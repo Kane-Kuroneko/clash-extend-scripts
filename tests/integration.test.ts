@@ -315,6 +315,86 @@ describe('CVR 客户端业务逻辑测试', () => {
 			
 			assert.ok(hasGeoIPRule, '应该包含 GEOIP,CN 规则');
 		});
+
+		it('应该包含大量 Microsoft 规则', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const config = result.output;
+			const microsoftRules = config.rules?.filter((r: string) => 
+				r.includes('Microsoft')
+			) || [];
+			
+			// Microsoft 规则应该有 70+ 条(包括 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX)
+			assert.ok(
+				microsoftRules.length >= 70,
+				`Microsoft 规则数量不足: 期望至少 70 条,实际 ${microsoftRules.length} 条`
+			);
+		});
+
+		it('Microsoft 规则应该包含 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX 类型', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const config = result.output;
+			const microsoftRules = config.rules?.filter((r: string) => 
+				r.includes('Microsoft')
+			) || [];
+			
+			const hasKeywordRules = microsoftRules.some((r: string) => 
+				r.startsWith('DOMAIN-KEYWORD,')
+			);
+			const hasSuffixRules = microsoftRules.some((r: string) => 
+				r.startsWith('DOMAIN-SUFFIX,')
+			);
+			
+			assert.ok(hasKeywordRules, '应该包含 DOMAIN-KEYWORD 类型的 Microsoft 规则');
+			assert.ok(hasSuffixRules, '应该包含 DOMAIN-SUFFIX 类型的 Microsoft 规则');
+		});
+
+		it('Microsoft 规则应该覆盖主要微软服务域名', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const config = result.output;
+			const microsoftRules = config.rules?.filter((r: string) => 
+				r.includes('Microsoft')
+			).join(',');
+			
+			// 验证关键微软服务域名
+			// 注意: microsoft.com 不在规则中,因为有 DOMAIN-KEYWORD,microsoft 可以匹配
+			const criticalDomains = [
+				'office.com',
+				'windows.com',
+				'live.com',
+				'outlook.com',
+				'onedrive.com',
+				'azure.com',
+				'xboxlive.com',
+				'hotmail.com',
+				'skype.com',
+				'sharepoint.com'
+			];
+			
+			for (const domain of criticalDomains) {
+				assert.ok(
+					microsoftRules.includes(domain),
+					`Microsoft 规则应该包含 ${domain}`
+				);
+			}
+			
+			// 验证有 DOMAIN-KEYWORD,microsoft 规则
+			assert.ok(
+				microsoftRules.includes('DOMAIN-KEYWORD,microsoft'),
+				'Microsoft 规则应该包含 DOMAIN-KEYWORD,microsoft'
+			);
+		});
 	});
 });
 
@@ -438,6 +518,24 @@ describe('Clash Party 客户端业务逻辑测试', () => {
 			assert.ok(
 				validation.success,
 				`验证失败: ${validation.messages.join(', ')}`
+			);
+		});
+
+		it('应该包含 Microsoft 规则', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('clash-party', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const config = result.output;
+			const microsoftRules = config.rules?.filter((r: string) => 
+				r.includes('Microsoft')
+			) || [];
+			
+			// Microsoft 规则应该有 70+ 条
+			assert.ok(
+				microsoftRules.length >= 70,
+				`Microsoft 规则数量不足: 期望至少 70 条,实际 ${microsoftRules.length} 条`
 			);
 		});
 	});

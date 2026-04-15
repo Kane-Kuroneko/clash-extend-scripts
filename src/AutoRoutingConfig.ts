@@ -203,8 +203,19 @@ export class AutoRoutingGroup extends Clash {
 		rules.push(...telegramRules);
 		
 		// 4. Microsoft规则 -> Microsoft分组
-		const microsoftRules = __CompileTime_Rules__.Loyalsoldier_Microsoft.map(
-			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['microsoft']}`
+		// Microsoft 规则已经是完整的规则字符串(包括 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX)
+		const microsoftRules = __CompileTime_Rules__.Microsoft.map(
+			(rule) => {
+				// 规则格式: "DOMAIN-SUFFIX,microsoft.com,Microsoft" 或 "DOMAIN-KEYWORD,microsoft,Microsoft"
+				// 需要将最后的 "Microsoft" 替换为实际的分组名称
+				const parts = rule.split(',');
+				if (parts.length >= 2) {
+					const ruleType = parts[0];
+					const ruleValue = parts[1];
+					return `${ruleType},${ruleValue},${this.presetGroups['microsoft']}`;
+				}
+				return rule;
+			}
 		);
 		rules.push(...microsoftRules);
 		

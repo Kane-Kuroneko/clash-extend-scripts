@@ -1,5 +1,6 @@
 // ESM Imports (按重要程度排序: 业务模块 > 第三方库 > 类型)
 import { RuleArray, RuleType } from './types/clash';
+import { dedupProxiesInGroup, autoDetectRuleType } from './utils';
 
 export const SelectorSymbols = {
 	Auto : Symbol( 'Auto' ) ,
@@ -9,9 +10,8 @@ export const SelectorSymbols = {
 	Reject : Symbol( 'REJECT' ) ,
 };
 
-export const dedupProxiesInGroup = (proxies:string[]) => {
-	return [...new Set(proxies)];
-};
+// 重新导出以保持向后兼容
+export { dedupProxiesInGroup };
 
 export const converters = {
 	rulesStrToRulesObject(rulesStrList:string[]):RuleArray[]{
@@ -148,11 +148,7 @@ export const converters = {
 	 * 输入:"+.baidu.com"   输出: ["DOMAIN-SUFFIX","+.baidu.com"]
 	 */
 	autoDetectRuleType(value:string):[keyof typeof RuleType,string]{
-		if( value.startsWith( '+.' ) ) {
-			return [ 'DOMAIN-SUFFIX' , value ];
-		} else {
-			return [ 'DOMAIN' , value ];
-		}
+		return autoDetectRuleType(value) as [keyof typeof RuleType, string];
 	}
 };
 

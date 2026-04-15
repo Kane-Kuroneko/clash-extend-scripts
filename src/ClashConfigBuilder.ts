@@ -2,13 +2,7 @@
 import { converters, dedupProxiesInGroup } from './RuleConverters';
 import { CGroup, ClashConfig, RuleType, RuleArray } from './types/clash';
 import type { YAML } from './types/client';
-
-// 原生实现 isPlainObject
-const isPlainObject = (obj: unknown): boolean => {
-	return obj !== null && 
-		typeof obj === 'object' && 
-		Object.prototype.toString.call(obj) === '[object Object]';
-};
+import { isPlainObject } from './utils';
 
 export class Clash {
 	yaml: YAML;
@@ -173,24 +167,29 @@ export class Clash {
 	
 	/**
 	 * 检查rules是否与新规则冲突
-	 * todo 初步检查,不严谨,待深入规则后再完善
+	 * @returns {boolean} 如果存在冲突返回true，否则返回false
 	 */
 	checkConflictRule(rules: ReturnType<typeof converters.rulesStrToRulesObject>, { type, value, groupName }: { type: keyof typeof RuleType, value?: string, groupName: "DIRECT" | "REJECT" | string }) {
-		let conflictFlag = false;
-		rules.forEach((rule) => {
-			if (rule.length === 3) {
+		// 检查是否与现有规则完全重复
+		for (const rule of rules) {
+			// 处理 3 元组或 4 元组规则（带 value 的规则）
+			if (rule.length >= 3) {
 				if (rule.type === type && rule.value === value && rule.proxy === groupName) {
-					conflictFlag = true;
 					this.console.log(`此规则<${type},${value},${groupName}>已与rules中有完全相同的条目`);
-				}
-			} else if (rule.length === 2) {
-				if (rule.type === 'MATCH' && type === 'MATCH') {
-					conflictFlag = true;
-					this.console.log(`MATCH规则冲突>>每个rules里只能有一条MATCH规则置于末尾!已存在的MATCH:${rule.proxy};新的MATCH:${groupName}`);
+					return true;
 				}
 			}
-		});
-		return conflictFlag;
+			// 处理 2 元组规则（MATCH 规则）
+			else if (rule.length === 2) {
+				// 如果现有规则是 MATCH，且新规则也是 MATCH，则冲突
+				if (rule.type === 'MATCH' && type === 'MATCH') {
+					this.console.log(`MATCH规则冲突>>每个rules里只能有一条MATCH规则置于末尾!已存在的MATCH:${rule.proxy};新的MATCH:${groupName}`);
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -233,7 +232,7 @@ export class Clash {
 	}
 	
 	get raw() {
-		if (!this.yaml || this.yaml === 'undefined') {
+		if (!this.yaml || this.yaml === undefined) {
 			throw new Error('YAML library is not available. This method is only supported in CFW environment.');
 		}
 		return this.yaml.stringify(this.source);

@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { converters, dedupProxiesInGroup, SelectorSymbols } from '../src/RuleConverters';
+import { converters, dedupProxiesInGroup, SelectorSymbols } from './RuleConverters';
 
 describe('RuleConverters 测试', () => {
 	describe('rulesStrToRulesObject', () => {
