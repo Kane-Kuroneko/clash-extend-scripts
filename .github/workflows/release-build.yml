@@ -30,9 +30,20 @@ jobs:
     - name: Run all tests
       run: npm run test:all
 
+    - name: Rename dist files with prefixes
+      run: |
+        mkdir -p dist-renamed
+        for file in $(find dist -name "*.js"); do
+          # 获取相对路径，例如 cfw/global-proxy.js
+          relative_path=${file#dist/}
+          # 将 / 替换为 - 作为前缀，例如 cfw-global-proxy.js
+          new_name=$(echo "$relative_path" | sed 's/\//-/g')
+          cp "$file" "dist-renamed/$new_name"
+        done
+
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/**/*.js
+        files: dist-renamed/*.js
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
