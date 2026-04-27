@@ -8,6 +8,8 @@ export class Clash {
 	yaml: YAML;
 	console: Console;
 	source: ClashConfig;
+	/** 保存用户原始配置的rules */
+	originalRules: string[];
 	
 	constructor (
 		{ source, raw }: { source: Partial<ClashConfig>, raw: string },
@@ -19,6 +21,9 @@ export class Clash {
 			console.log(source);
 			throw '参数<source>必须是个clash对象';
 		}
+		
+		// 保存用户原始配置的rules（在清空之前）
+		this.originalRules = Array.isArray(source.rules) ? [...source.rules] : [];
 		
 		// 确保 source 包含必要的字段
 		// 注意：强制清空 proxy-groups 和 rules，避免保留 VPN 供应商的原始配置

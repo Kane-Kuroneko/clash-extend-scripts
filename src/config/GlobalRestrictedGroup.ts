@@ -35,11 +35,18 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 			);
 		}
 		
-		// 配置简单规则
+		// 处理并合并用户原始rules
+		const convertedRules = this.convertOriginalRules();
+		
+		// 配置简单规则（合并用户原始rules）
 		this.source['rules'] = [
+			...convertedRules,
 			`GEOIP,CN,${this.presetGroups['China-Geo-IP']}`,
 			`MATCH,${this.presetGroups[SelectorSymbols.ManualA]}`,
 		];
+		
+		// 去重处理
+		this.source['rules'] = this.deduplicateRules(this.source['rules']);
 		
 		// 配置分组
 		this.configureGroups({ name, url, interval, selected });
@@ -79,6 +86,76 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 				],
 			})
 		);
+	}
+	
+	/**
+	 * 转换用户原始rules的group名称
+	 * - block/REJECT/DIRECT 保持不变
+	 * - 其他group统一转换为 ProxyA
+	 */
+	convertOriginalRules(): string[] {
+		const proxyAGroup = this.presetGroups[SelectorSymbols.ManualA];
+		const originalRules = this.originalRules || [];
+		
+		if (originalRules.length === 0) {
+			return [];
+		}
+		
+		console.log(`✅ 加载并转换用户原始rules: ${originalRules.length} 条`);
+		
+		return originalRules.map(rule => {
+			const parts = rule.split(',');
+			if (parts.length < 2) {
+				// 格式不正确的rule，原样返回
+				return rule;
+			}
+			
+			// MATCH规则只有两部分: MATCH,group
+			if (parts[0] === 'MATCH') {
+				const group = parts[1];
+				// block/REJECT/DIRECT 保持不变
+				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+					return rule;
+				}
+				// 其他group转换为ProxyA
+				return `MATCH,${proxyAGroup}`;
+			}
+			
+			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
+			if (parts.length >= 3) {
+				const group = parts[2];
+				// block/REJECT/DIRECT 保持不变
+				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+					return rule;
+				}
+				// 其他group转换为ProxyA
+				if (parts.length === 4) {
+					// 带no-resolve的规则
+					return `${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`;
+				}
+				return `${parts[0]},${parts[1]},${proxyAGroup}`;
+			}
+			
+			// 其他情况原样返回
+			return rule;
+		});
+	}
+	
+	/**
+	 * 去重rules（保留首次出现的规则）
+	 */
+	deduplicateRules(rules: string[]): string[] {
+		const seen = new Set<string>();
+		const result: string[] = [];
+		
+		for (const rule of rules) {
+			if (!seen.has(rule)) {
+				seen.add(rule);
+				result.push(rule);
+			}
+		}
+		
+		return result;
 	}
 	
 }

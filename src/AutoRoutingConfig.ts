@@ -8,6 +8,8 @@ import { ClashConfig, RuleType } from './types/clash';
 import { SelectorSymbols, converters } from './RuleConverters';
 import { Clash, Group } from './ClashConfigBuilder';
 import type { YAML } from './types/client';
+import type { UserCustomRulesConfig } from './types/user-rules';
+import { convert3DRulesToMihomoRules, validate3DRules } from './config/UserCustomRulesConverter';
 
 export class AutoRoutingGroup extends Clash {
 	presetGroups = {
@@ -43,6 +45,12 @@ export class AutoRoutingGroup extends Clash {
 	 */
 	proxiesList: string[];
 	
+	/**
+	 * 用户自定义规则
+	 * @type {UserCustomRulesConfig}
+	 */
+	userRules: UserCustomRulesConfig;
+	
 	constructor(
 		{ source , raw }: { source: Partial<ClashConfig>, raw: string } ,
 		{ axios , yaml , notify , console }: { axios: unknown, yaml: YAML, notify: unknown, console: Console } ,
@@ -59,6 +67,11 @@ export class AutoRoutingGroup extends Clash {
 		this.console = console;
 		this.yaml = yaml;
 		this.proxiesList = source.proxies.map( ( proxy ) => proxy.name );
+		
+		// 加载用户自定义规则（通过编译时注入）
+		this.userRules = typeof __USER_CUSTOM_RULES__ !== 'undefined' 
+			? __USER_CUSTOM_RULES__ 
+			: { rules3D: [], simpleRules: { prepend: [], append: [] }, groups: [] };
 		
 		// 构建规则
 		this.buildRules();
@@ -176,6 +189,22 @@ export class AutoRoutingGroup extends Clash {
 			} ) ,
 		];
 		this.addGroups( ...groups );
+		
+		// 添加用户自定义代理组
+		if (this.userRules.groups && this.userRules.groups.length > 0) {
+			const customGroups = this.userRules.groups.map(g => 
+				new Group({
+					name: g.name,
+					type: (g.type === 'fallback' ? 'select' : g.type) || 'select',
+					proxies: g.proxies || [],
+					url: g.url,
+					interval: g.interval,
+					strategy: g.strategy as 'consistent-hashing' | 'round-robin' | undefined
+				})
+			);
+			this.addGroups(...customGroups);
+			console.log(`✅ 加载用户自定义代理组: ${customGroups.length} 个`);
+		}
 	}
 	
 	/**
@@ -184,7 +213,46 @@ export class AutoRoutingGroup extends Clash {
 	buildRules() {
 		const rules: string[] = [];
 		
-		// 1. GFW规则 -> GFW分组
+		// 0. 处理用户原始配置的rules（从CVR客户端配置中保存的）
+		if (this.originalRules && this.originalRules.length > 0) {
+			const convertedOriginalRules = this.convertOriginalRules(this.originalRules);
+			rules.push(...convertedOriginalRules);
+			console.log(`✅ 加载并转换用户原始rules: ${convertedOriginalRules.length} 条`);
+		}
+		
+		// 1. 用户自定义三维规则（转换为 AND 规则，最高优先级）
+		if (this.userRules.rules3D && this.userRules.rules3D.length > 0) {
+			// 验证规则
+			const validationResults = validate3DRules(this.userRules.rules3D);
+			const invalidRules = validationResults.filter(r => !r.valid);
+			
+			if (invalidRules.length > 0) {
+				console.warn('⚠️ 发现无效的用户规则:');
+				invalidRules.forEach(({ rule, errors }) => {
+					console.warn(`  - ${rule.description || '未命名规则'}: ${errors.join(', ')}`);
+				});
+			}
+			
+			// 转换有效规则
+			const validRules = this.userRules.rules3D.filter(rule => rule.enabled !== false);
+			const convertedRules = convert3DRulesToMihomoRules(validRules);
+			rules.push(...convertedRules);
+			console.log(`✅ 加载用户自定义三维规则: ${validRules.length} 条 → ${convertedRules.length} 条 Mihomo AND 规则`);
+		}
+		
+		// 2. 用户自定义简单前置规则（次高优先级）
+		if (this.userRules.simpleRules?.prepend && this.userRules.simpleRules.prepend.length > 0) {
+			const userPrependRules = this.userRules.simpleRules.prepend.map(rule => {
+				const ruleStr = rule.noResolve 
+					? `${rule.type},${rule.value},${rule.group},no-resolve`
+					: `${rule.type},${rule.value},${rule.group}`;
+				return ruleStr;
+			});
+			rules.push(...userPrependRules);
+			console.log(`✅ 加载用户自定义简单前置规则: ${userPrependRules.length} 条`);
+		}
+		
+		// 3. GFW规则 -> GFW分组
 		const gfwRules = __CompileTime_Rules__.Loyalsoldier_GFW.map(
 			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['gfw']}`
 		);
@@ -256,10 +324,89 @@ export class AutoRoutingGroup extends Clash {
 		// 10. GEOIP,CN -> China Direct分组 (覆盖未在直连列表中的国内IP)
 		rules.push(`GEOIP,CN,${this.presetGroups['direct-group']}`);
 		
-		// 11. 添加Final规则(漏网之鱼)
+		// 11. 用户自定义简单后置规则（MATCH 之前）
+		if (this.userRules.simpleRules?.append && this.userRules.simpleRules.append.length > 0) {
+			const userAppendRules = this.userRules.simpleRules.append.map(rule => {
+				const ruleStr = rule.noResolve 
+					? `${rule.type},${rule.value},${rule.group},no-resolve`
+					: `${rule.type},${rule.value},${rule.group}`;
+				return ruleStr;
+			});
+			rules.push(...userAppendRules);
+			console.log(`✅ 加载用户自定义简单后置规则: ${userAppendRules.length} 条`);
+		}
+		
+		// 12. 添加Final规则(漏网之鱼)
 		rules.push(`MATCH,${this.presetGroups['final']}`);
 		
-		this.source.rules = rules;
+		// 13. 去重处理
+		const deduplicatedRules = this.deduplicateRules(rules);
+		console.log(`✅ 规则去重: ${rules.length} -> ${deduplicatedRules.length} 条`);
+		
+		this.source.rules = deduplicatedRules;
+	}
+	
+	/**
+	 * 转换用户原始rules的group名称
+	 * - block/REJECT/DIRECT 保持不变
+	 * - 其他group统一转换为 ProxyA
+	 */
+	convertOriginalRules(originalRules: string[]): string[] {
+		const proxyAGroup = this.presetGroups[SelectorSymbols.ManualA];
+		
+		return originalRules.map(rule => {
+			const parts = rule.split(',');
+			if (parts.length < 2) {
+				// 格式不正确的rule，原样返回
+				return rule;
+			}
+			
+			// MATCH规则只有两部分: MATCH,group
+			if (parts[0] === 'MATCH') {
+				const group = parts[1];
+				// block/REJECT/DIRECT 保持不变
+				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+					return rule;
+				}
+				// 其他group转换为ProxyA
+				return `MATCH,${proxyAGroup}`;
+			}
+			
+			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
+			if (parts.length >= 3) {
+				const group = parts[2];
+				// block/REJECT/DIRECT 保持不变
+				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+					return rule;
+				}
+				// 其他group转换为ProxyA
+				if (parts.length === 4) {
+					// 带no-resolve的规则
+					return `${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`;
+				}
+				return `${parts[0]},${parts[1]},${proxyAGroup}`;
+			}
+			
+			// 其他情况原样返回
+			return rule;
+		});
+	}
+	
+	/**
+	 * 去重rules（保留首次出现的规则）
+	 */
+	deduplicateRules(rules: string[]): string[] {
+		const seen = new Set<string>();
+		const result: string[] = [];
+		
+		for (const rule of rules) {
+			if (!seen.has(rule)) {
+				seen.add(rule);
+				result.push(rule);
+			}
+		}
+		
+		return result;
 	}
 	
 }

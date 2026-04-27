@@ -1,0 +1,12 @@
+{
+  "name": "clash-parser-user-rules",
+  "version": "1.0.0",
+  "description": "Clash Parser 用户自定义规则配置目录",
+  "scripts": {
+    "build:auto": "cd .. && npm run build:cvr:auto -- --user-rules ./user-rules.ts",
+    "build:global": "cd .. && npm run build:cvr:global -- --user-rules ./user-rules.ts",
+    "validate": "npx tsc --noEmit ./user-rules.ts"
+  },
+  "keywords": ["clash", "rules", "config"],
+  "license": "MIT"
+}

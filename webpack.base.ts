@@ -14,6 +14,12 @@ const optionDefinitions = [
 		alias: 'w',
 		type: Boolean,
 		defaultValue: false,
+	},
+	{
+		name: 'user-rules' as const,
+		alias: 'u',
+		type: String,
+		defaultValue: '',
 	}
 ];
 
@@ -59,6 +65,36 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // 编译时规则直接通过 DefinePlugin 注入，无需写入文件
 console.log(`规则数据大小: ${(JSON.stringify(compileTimeRules).length / 1024).toFixed(2)} KB`);
+
+// 加载用户自定义规则
+let userCustomRules = { rules3D: [], simpleRules: { prepend: [], append: [] }, groups: [] };
+if (args['user-rules']) {
+	try {
+		const userRulesPath = path.resolve(args['user-rules']);
+		console.log(`尝试加载用户自定义规则: ${userRulesPath}`);
+		
+		// Windows 需要将绝对路径转换为 file:// URL
+		const isWindows = process.platform === 'win32';
+		const importPath = isWindows 
+			? `file:///${userRulesPath.replace(/\\/g, '/')}` 
+			: userRulesPath;
+		
+		const userRulesModule = await import(importPath);
+		userCustomRules = userRulesModule.userCustomRules || userRulesModule.default || {};
+		
+		const rules3DCount = userCustomRules.rules3D?.length || 0;
+		const prependCount = userCustomRules.simpleRules?.prepend?.length || 0;
+		const appendCount = userCustomRules.simpleRules?.append?.length || 0;
+		const groupsCount = userCustomRules.groups?.length || 0;
+		
+		console.log(`✅ 用户自定义规则加载成功: rules3D=${rules3DCount}, simpleRules(prepend=${prependCount}, append=${appendCount}), groups=${groupsCount}`);
+	} catch (error) {
+		console.warn(`⚠️ 加载用户自定义规则失败: ${error.message}`);
+		console.warn('   将使用空配置（不加载任何用户规则）');
+	}
+} else {
+	console.log('💡 未指定用户自定义规则文件，使用 --user-rules 参数加载');
+}
 
 const conf: Configuration = {
 	mode: 'production',
@@ -123,6 +159,7 @@ const conf: Configuration = {
 			__MAIN__: `this['main']=main;`,
 			__ROUTING_MODE__: JSON.stringify(modeArg),
 			__CompileTime_Rules__: JSON.stringify(compileTimeRules),
+			__USER_CUSTOM_RULES__: JSON.stringify(userCustomRules),
 		}),
 		// CVR 和 Clash Party:在文件头部添加 var main 声明,严格模式下不报错
 		...(clientArg !== 'cfw' ? [new webpack.BannerPlugin({

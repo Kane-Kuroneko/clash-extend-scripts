@@ -13,6 +13,7 @@ const testFiles = [
 	'src/RuleConverters.test.ts',
 	'src/ClashConfigBuilder.test.ts',
 	'src/config/ConfigFactory.test.ts',
+	'src/config/UserCustomRulesConverter.test.ts',  // 三维规则转换器测试
 ];
 
 let allPassed = true;
