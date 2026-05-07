@@ -58,7 +58,7 @@ then( ( text ) => {
 /**
  * 获取Loyalsoldier/clash-rules规则
  * 直接从raw.githubusercontent.com获取YAML文件
- * 只保留DOMAIN相关规则,过滤掉IP-CIDR规则
+ * 只保留真正的国外媒体服务域名(过滤掉 Microsoft/Apple/Google/开发工具/CDN 等)
  */
 export const fetchLoyalsoldierRules = (url: string) => fetch(url, {
 	headers: {
@@ -95,7 +95,8 @@ export const fetchLoyalsoldierRules = (url: string) => fetch(url, {
 				}
 				// 其他情况直接返回
 				return rule;
-			});
+			})
+			.filter(domain => filterForeignMediaDomains(domain));
 	});
 
 /**
@@ -215,6 +216,90 @@ async function fetchWithRetry<T>(
 	
 	// 所有重试都失败
 	throw new Error(`[${name}] 失败: 已重试${maxRetries}次仍失败 - ${lastError?.message}`);
+}
+
+/**
+ * 智能筛选 Foreign Media 域名
+ * 只保留真正的国外媒体服务,过滤掉 Microsoft/Apple/Google/开发工具/CDN 等
+ */
+function filterForeignMediaDomains(domain: string): boolean {
+	const domainLower = domain.toLowerCase();
+	
+	// 需要排除的非媒体域名类别
+	const excludeKeywords = [
+		// Microsoft 相关(应走 Microsoft 组)
+		'microsoft.com', 'azure.microsoft', 'windows.net', 'office.com', 'visualstudio',
+		'xbox.com', 'xboxlive.com', 'live.com', 'hotmail.com', 'outlook.com',
+		
+		// Apple 相关(应走 Apple 组)
+		'apple.com', 'icloud.com', 'itunes.com', 'mzstatic.com',
+		
+		// Google 基础服务(非媒体)
+		'googleapis.com', 'gstatic.com', 'google.com.hk', 'google.cn',
+		'android.googlesource.com', 'googlecode.com',
+		
+		// 开发工具和代码托管
+		'github.com', 'github.io', 'githubusercontent.com', 'githubassets.com',
+		'gitlab.com', 'gitlab.io', 'bitbucket.org',
+		'docker.com', 'docker.io', 'npmjs.com', 'npmjs.org',
+		'stackoverflow.com', 'serverfault.com',
+		
+		// CDN 和云基础设施(非媒体)
+		'akamaihd.net', 'akamaized.net', 'cloudfront.net', 'amazonaws.com',
+		'cloudflare.com', 'fastly.net', 'hwcdn.net',
+		
+		// 游戏服务
+		'blizzard.com', 'battle.net', 'steampowered.com', 'steamcommunity.com',
+		'epicgames.com', 'unity3d.com', 'unrealengine.com',
+		
+		// 金融和加密货币
+		'bybit.com', 'binance.com', 'coinbase.com',
+		
+		// 其他非媒体服务
+		'teamviewer.com', 'cisco.com', 'adobe.com', 'oracle.com',
+		'csis.org', 'beck.de', 'boingboing.net',
+	];
+	
+	// 检查是否需要排除
+	const shouldExclude = excludeKeywords.some(keyword => domainLower.includes(keyword));
+	if (shouldExclude) {
+		return false;
+	}
+	
+	// 只保留明确的媒体服务域名
+	const mediaKeywords = [
+		// 视频流媒体
+		'netflix', 'youtube', 'youtu.be', 'twitch', 'hulu', 'hbomax', 'max.com',
+		'disney', 'primevideo', 'amazon.*video', 'appletv', 'tv.apple',
+		'spotify', 'soundcloud', 'deezer', 'tidal', 'pandora',
+		'bilibili.tv', 'iq.com', 'viki', 'kocowa',
+		'abema', 'unext', 'niconico', 'dmm.com',
+		
+		// 音乐和播客
+		'music.apple.com', 'podcasts.apple.com',
+		
+		// 社交媒体(含视频)
+		'instagram.com', 'tiktok.com', 'twitter.com', 'x.com',
+		'facebook.com', 'fbcdn.net',
+		
+		// 新闻媒体
+		'bbc.com', 'cnn.com', 'nytimes.com', 'reuters.com',
+		
+		// 其他媒体相关
+		'vimeo', 'dailymotion', 'peacocktv', 'paramount',
+		'showtime', 'starz', 'crunchyroll', 'funimation',
+	];
+	
+	const isMediaDomain = mediaKeywords.some(keyword => {
+		// 处理通配符匹配(如 amazon.*video)
+		if (keyword.includes('*')) {
+			const regex = new RegExp(keyword.replace(/\*/g, '.*'));
+			return regex.test(domainLower);
+		}
+		return domainLower.includes(keyword);
+	});
+	
+	return isMediaDomain;
 }
 
 /**

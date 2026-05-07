@@ -258,19 +258,7 @@ export class AutoRoutingGroup extends Clash {
 		);
 		rules.push(...gfwRules);
 		
-		// 2. Proxy规则 -> Foreign Media分组
-		const proxyRules = __CompileTime_Rules__.Loyalsoldier_Proxy.map(
-			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['foreign-media']}`
-		);
-		rules.push(...proxyRules);
-		
-		// 3. Telegram规则 -> Telegram分组
-		const telegramRules = __CompileTime_Rules__.Loyalsoldier_Telegram.map(
-			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['telegram']}`
-		);
-		rules.push(...telegramRules);
-		
-		// 4. Microsoft规则 -> Microsoft分组
+		// 4. Microsoft规则 -> Microsoft分组 (必须在 Proxy 规则之前，避免 microsoft.com 被 Foreign Media 匹配)
 		// Microsoft 规则已经是完整的规则字符串(包括 DOMAIN-KEYWORD 和 DOMAIN-SUFFIX)
 		const microsoftRules = __CompileTime_Rules__.Microsoft.map(
 			(rule) => {
@@ -287,16 +275,28 @@ export class AutoRoutingGroup extends Clash {
 		);
 		rules.push(...microsoftRules);
 		
-		// 5. Apple规则 -> Apple分组
+		// 5. Proxy规则 -> Foreign Media分组 (在 Microsoft 规则之后，避免误匹配)
+		const proxyRules = __CompileTime_Rules__.Loyalsoldier_Proxy.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['foreign-media']}`
+		);
+		rules.push(...proxyRules);
+		
+		// 6. Telegram规则 -> Telegram分组
+		const telegramRules = __CompileTime_Rules__.Loyalsoldier_Telegram.map(
+			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['telegram']}`
+		);
+		rules.push(...telegramRules);
+		
+		// 7. Apple规则 -> Apple分组
 		const appleRules = __CompileTime_Rules__.Loyalsoldier_Apple.map(
 			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['apple']}`
 		);
 		rules.push(...appleRules);
 		
-		// 6. 添加github下载规则到Download分组
+		// 8. 添加github下载规则到Download分组
 		rules.push(`DOMAIN,objects.githubusercontent.com,${this.presetGroups['download']}`);
 		
-		// 7. Bilibili规则到Region Media分组
+		// 9. Bilibili规则到Region Media分组
 		const bilibiliRules = [
 			...__CompileTime_Rules__.CN_bilibili ,
 			...__CompileTime_Rules__.ITNL_bilibili ,
@@ -307,7 +307,7 @@ export class AutoRoutingGroup extends Clash {
 		});
 		rules.push(`DOMAIN-KEYWORD,bili,${this.presetGroups['region-media']}`);
 		
-		// 8. 添加原有的Blocked_By_GFW规则到GFW分组
+		// 10. 添加原有的Blocked_By_GFW规则到GFW分组
 		const blockedGfwRules = __CompileTime_Rules__.Blocked_By_GFW.map(
 			(rule) => converters.autoDetectRuleType(rule) as [keyof typeof RuleType, string]
 		);
@@ -315,16 +315,16 @@ export class AutoRoutingGroup extends Clash {
 			rules.push(`${type},${value},${this.presetGroups['gfw']}`);
 		});
 		
-		// 9. 直连域名规则 -> China Direct分组 (高频国内站点优先匹配)
+		// 11. 直连域名规则 -> China Direct分组 (高频国内站点优先匹配)
 		const directRules = __CompileTime_Rules__.Loyalsoldier_Direct.map(
 			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['direct-group']}`
 		);
 		rules.push(...directRules);
 		
-		// 10. GEOIP,CN -> China Direct分组 (覆盖未在直连列表中的国内IP)
+		// 12. GEOIP,CN -> China Direct分组 (覆盖未在直连列表中的国内IP)
 		rules.push(`GEOIP,CN,${this.presetGroups['direct-group']}`);
 		
-		// 11. 用户自定义简单后置规则（MATCH 之前）
+		// 13. 用户自定义简单后置规则（MATCH 之前）
 		if (this.userRules.simpleRules?.append && this.userRules.simpleRules.append.length > 0) {
 			const userAppendRules = this.userRules.simpleRules.append.map(rule => {
 				const ruleStr = rule.noResolve 
@@ -336,10 +336,10 @@ export class AutoRoutingGroup extends Clash {
 			console.log(`✅ 加载用户自定义简单后置规则: ${userAppendRules.length} 条`);
 		}
 		
-		// 12. 添加Final规则(漏网之鱼)
+		// 14. 添加Final规则(漏网之鱼)
 		rules.push(`MATCH,${this.presetGroups['final']}`);
 		
-		// 13. 去重处理
+		// 15. 去重处理
 		const deduplicatedRules = this.deduplicateRules(rules);
 		console.log(`✅ 规则去重: ${rules.length} -> ${deduplicatedRules.length} 条`);
 		
