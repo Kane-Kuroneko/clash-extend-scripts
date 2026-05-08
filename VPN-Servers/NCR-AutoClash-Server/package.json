@@ -1,0 +1,18 @@
+{
+	"name": "@vpn-servers/ncr-autoclash-server",
+	"version": "1.0.0",
+	"description": "VPN Server with Clash Auto-Routing - Smart proxy groups and rules",
+	"type": "module",
+	"scripts": {
+		"build-deps": "cd ../.. && npm run build:cvr:auto",
+		"start": "tsx ./server.ts \"<YOUR_SUBSCRIPTION_URL>\" 3456",
+		"dev": "tsx watch ./server.ts"
+	},
+	"dependencies": {
+		"yaml": "^2.5.0"
+	},
+	"devDependencies": {
+		"tsx": "^4.19.2",
+		"typescript": "^5.5.4"
+	}
+}

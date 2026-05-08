@@ -1,0 +1,14 @@
+{
+	"name": "vpn-servers",
+	"version": "1.0.0",
+	"description": "VPN Servers Workspace",
+	"private": true,
+	"workspaces": [
+		"NCR-AutoClash-Server"
+	],
+	"scripts": {
+		"install:all": "npm install",
+		"start:ncr": "npm start -w NCR-AutoClash-Server",
+		"dev:ncr": "npm run dev -w NCR-AutoClash-Server"
+	}
+}
