@@ -1,0 +1,286 @@
+# Proxifier 配置转换为 Mihomo 格式
+# 转换说明：
+# - 使用 AND 逻辑实现进程名+域名+端口的复合匹配
+# - Proxy 100/103 (7890 - ClashVergeRev) 已忽略，由 tun 模式处理
+# - Proxy 101/102 (7897 - ClashParty) 转换为 ProxyA
+# - Direct 转换为 DIRECT
+# - Block 转换为 REJECT
+
+rules:
+  # ==========================================
+  # 被禁用的规则 (Epic Games Browse - enabled="false")
+  # ==========================================
+  # - AND,((PROCESS-NAME,EpicGamesLauncher.exe),(DOMAIN-SUFFIX,epicgames.com)),ProxyA
+  # - AND,((PROCESS-NAME,EpicWebHelper.exe),(DOMAIN-SUFFIX,epicgames.com)),ProxyA
+
+  # ==========================================
+  # Lol国服 (Direct)
+  # ==========================================
+  - DOMAIN,some.url,DIRECT
+  - IP-CIDR,127.234.0.69/32,DIRECT,no-resolve
+  
+  # Lol国服-app (Direct - 仅进程匹配)
+  - PROCESS-NAME,leagueclient.exe,DIRECT
+  - PROCESS-NAME,riotclientservices.exe,DIRECT
+  - PROCESS-NAME,leagueclientuxrender.exe,DIRECT
+  - PROCESS-NAME,sguard64.exe,DIRECT
+  - PROCESS-NAME,Client.exe,DIRECT
+  - PROCESS-NAME,tcls_core.exe,DIRECT
+
+  # ==========================================
+  # 自动创建的直连进程规则
+  # ==========================================
+  - PROCESS-NAME,clash-win64.exe,DIRECT
+  - PROCESS-NAME,com.docker.backend.exe,DIRECT
+  - PROCESS-NAME,livehime.exe,DIRECT
+  - PROCESS-NAME,svchost.exe,DIRECT
+
+  # ==========================================
+  # Apps-Passthrough (Direct - 多个进程)
+  # ==========================================
+  - PROCESS-NAME,ramboplay.ra2.exe,DIRECT
+  - PROCESS-NAME,systemsettings.exe,DIRECT
+  - PROCESS-NAME,ssh.exe,DIRECT
+  - PROCESS-NAME,searchhost.exe,DIRECT
+  - PROCESS-NAME,winstore.app.exe,DIRECT
+  - PROCESS-NAME,aria2c.exe,DIRECT
+  - PROCESS-NAME,baidunetdisk.exe,DIRECT
+  - PROCESS-NAME,cloudmusic.exe,DIRECT
+  - PROCESS-NAME,vkproxy.exe,DIRECT
+  - PROCESS-NAME,vkdns.exe,DIRECT
+  - PROCESS-NAME,vkdownload_x64.exe,DIRECT
+  - PROCESS-NAME,leagueclient.exe,DIRECT
+  - PROCESS-NAME,bitcomet.exe,DIRECT
+  - PROCESS-NAME,baidunetdiskhost.exe,DIRECT
+  - PROCESS-NAME,bililive_browser.exe,DIRECT
+  - PROCESS-NAME,todo.exe,DIRECT
+  - PROCESS-NAME,sgtool.exe,DIRECT
+  - PROCESS-NAME,kgservice.exe,DIRECT
+  - PROCESS-NAME,wechet.exe,DIRECT
+  - PROCESS-NAME,localsend_app.exe,DIRECT
+
+  # ==========================================
+  # Blocked APP (REJECT)
+  # ==========================================
+  - PROCESS-NAME,googleupdate.exe,REJECT
+
+  # ==========================================
+  # Domain-Auto-Clash (Proxy 100 -> tun模式，此处忽略)
+  # ==========================================
+  # bilibili 和 youtube 由 tun 模式自动处理
+
+  # ==========================================
+  # LAN (Direct)
+  # ==========================================
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+
+  # ==========================================
+  # Localhost (Direct)
+  # ==========================================
+  - DOMAIN,localhost,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,::1/128,DIRECT,no-resolve
+
+  # ==========================================
+  # V2Ray (Direct)
+  # ==========================================
+  - PROCESS-NAME,v2rayN.exe,DIRECT
+  - PROCESS-NAME,xray.exe,DIRECT
+
+  # ==========================================
+  # Netch (Direct)
+  # ==========================================
+  - PROCESS-NAME,Netch.exe,DIRECT
+
+  # ==========================================
+  # Clash (Direct)
+  # ==========================================
+  - PROCESS-NAME,clash-win64.exe,DIRECT
+  - PROCESS-NAME,Clash for Windows.exe,DIRECT
+
+  # ==========================================
+  # steamcommunity (Proxy 102 -> ProxyA)
+  # 使用 AND 逻辑：进程名 + 域名
+  # ==========================================
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-WILDCARD,*.steamcommunity.*)),ProxyA
+  - AND,((PROCESS-NAME,steamservice.exe),(DOMAIN-WILDCARD,*.steamcommunity.*)),ProxyA
+  - AND,((PROCESS-NAME,steamwebhelper.exe),(DOMAIN-WILDCARD,*.steamcommunity.*)),ProxyA
+  - AND,((PROCESS-NAME,chrome.exe),(DOMAIN-WILDCARD,*.steamcommunity.*)),ProxyA
+  - AND,((PROCESS-NAME,msedge.exe),(DOMAIN-WILDCARD,*.steamcommunity.*)),ProxyA
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,store.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steamservice.exe),(DOMAIN,store.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steamwebhelper.exe),(DOMAIN,store.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,chrome.exe),(DOMAIN,store.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,msedge.exe),(DOMAIN,store.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,shared.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steamservice.exe),(DOMAIN,shared.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steamwebhelper.exe),(DOMAIN,shared.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,chrome.exe),(DOMAIN,shared.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,msedge.exe),(DOMAIN,shared.fastly.steamstatic.com)),ProxyA
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-WILDCARD,steamcloud*)),ProxyA
+  - AND,((PROCESS-NAME,steamservice.exe),(DOMAIN-WILDCARD,steamcloud*)),ProxyA
+  - AND,((PROCESS-NAME,steamwebhelper.exe),(DOMAIN-WILDCARD,steamcloud*)),ProxyA
+  - AND,((PROCESS-NAME,chrome.exe),(DOMAIN-WILDCARD,steamcloud*)),ProxyA
+  - AND,((PROCESS-NAME,msedge.exe),(DOMAIN-WILDCARD,steamcloud*)),ProxyA
+
+  # ==========================================
+  # Steam-download (Direct)
+  # 使用 AND 逻辑：进程名 + 域名
+  # ==========================================
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-WILDCARD,*.dl.eccdnx.*)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,dl.steam.clngaa.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,xz.pphimalayanrt.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-WILDCARD,*.steamcontent.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-WILDCARD,steampipe.*)),DIRECT
+
+  # ==========================================
+  # Steam (Proxy 102 -> ProxyA - 仅进程匹配)
+  # ==========================================
+  - PROCESS-NAME,steam.exe,ProxyA
+  - PROCESS-NAME,steamservice.exe,ProxyA
+  - PROCESS-NAME,steamwebhelper.exe,ProxyA
+
+  # ==========================================
+  # Domain-Passthrough (Direct)
+  # ==========================================
+  - DOMAIN-WILDCARD,*.baidu.*,DIRECT
+  - DOMAIN-WILDCARD,*.juejin.*,DIRECT
+  - DOMAIN-WILDCARD,*.zijieapi.*,DIRECT
+  - DOMAIN-WILDCARD,*.115.*,DIRECT
+  - DOMAIN-WILDCARD,*.processon.*,DIRECT
+  - DOMAIN-WILDCARD,*.zhihu.*,DIRECT
+  - DOMAIN,zhihu,DIRECT
+  - IP-CIDR,140.249.62.213/32,DIRECT,no-resolve
+  - DOMAIN-WILDCARD,*.tencent.*,DIRECT
+  - DOMAIN-WILDCARD,*.steamcontent.*,DIRECT
+  - DOMAIN-WILDCARD,*.steamserver.*,DIRECT
+  - DOMAIN-WILDCARD,*.wetransfer.*,DIRECT
+  - DOMAIN,www.hdchina.net,DIRECT
+  - DOMAIN-WILDCARD,*.nvidia.*,DIRECT
+  - DOMAIN-WILDCARD,*.blizzard.*,DIRECT
+  - DOMAIN,level3.blizzard.*,DIRECT
+  - DOMAIN,ams.game.qq.com,DIRECT
+  - DOMAIN,comm.ams.game.qq.com,DIRECT
+  - DOMAIN-WILDCARD,*.qq.com,DIRECT
+  - DOMAIN,gamer520,DIRECT
+  - DOMAIN-WILDCARD,*.switch618.*,DIRECT
+  - DOMAIN,romsfun,DIRECT
+  - DOMAIN-WILDCARD,*.psgamedl.*,DIRECT
+  - DOMAIN-WILDCARD,*.romsforever.*,DIRECT
+  - DOMAIN-WILDCARD,*.romsfast.*,DIRECT
+  - DOMAIN,gamers520,DIRECT
+  - DOMAIN,steamzg,DIRECT
+  - DOMAIN,acgxj.com,DIRECT
+
+  # ==========================================
+  # Domain-Blocked (REJECT)
+  # ==========================================
+  - DOMAIN,stats.wp.com,REJECT
+  - DOMAIN,versioncheck.addons.mozilla.org,REJECT
+  - DOMAIN,api.gameanalytics.com,REJECT
+  - DOMAIN,ipv4.tracker.harry.lu,REJECT
+  - DOMAIN,cdp.cloud.unity3d.com,REJECT
+  - DOMAIN,config.uca.cloud.unity3d.com,REJECT
+  - IP-CIDR,169.254.101.168/32,REJECT,no-resolve
+  - DOMAIN,collect.analytics.unity3d.com,REJECT
+  - DOMAIN,install.kugou.com,REJECT
+  - DOMAIN,adsfile.bssdlbig.kugou.com,REJECT
+  - DOMAIN,www2.kugou.kugou.com,REJECT
+
+  # ==========================================
+  # App-Auto-Clash (Proxy 103 -> tun模式，此处忽略)
+  # ==========================================
+  # VMware 相关进程由 tun 模式自动处理
+
+  # ==========================================
+  # Gaming (Proxy 101 -> ProxyA - 仅进程匹配)
+  # ==========================================
+  - PROCESS-NAME,Playnite.DesktopApp.exe,ProxyA
+
+  # ==========================================
+  # Apps-Proxy (Proxy 101 -> ProxyA - 仅进程匹配)
+  # ==========================================
+  - PROCESS-NAME,battle.net.exe,ProxyA
+  - PROCESS-NAME,figma.exe,ProxyA
+  - PROCESS-NAME,firefox.exe,ProxyA
+  - PROCESS-NAME,telegram.exe,ProxyA
+  - PROCESS-NAME,webstorm64.exe,ProxyA
+  - PROCESS-NAME,w32time.exe,ProxyA
+  - PROCESS-NAME,origin.exe,ProxyA
+  - PROCESS-NAME,zclient.exe,ProxyA
+
+  # ==========================================
+  # Domain-Proxy (Proxy 101 -> ProxyA)
+  # ==========================================
+  - DOMAIN,dog.ssrdog.com,ProxyA
+  - DOMAIN-WILDCARD,*.gitbook.*,ProxyA
+  - DOMAIN-WILDCARD,*.google.*,ProxyA
+  - DOMAIN-WILDCARD,*.bing.*,ProxyA
+  - DOMAIN,torrentz2.nz,ProxyA
+  - DOMAIN-WILDCARD,*.codex.*,ProxyA
+  - DOMAIN-WILDCARD,*.figma.*,ProxyA
+  - DOMAIN-WILDCARD,*.steampowered.*,ProxyA
+  - DOMAIN,steam,ProxyA
+  - DOMAIN-WILDCARD,*.elamigos-games.*,ProxyA
+  - DOMAIN-WILDCARD,*.youtube.*,ProxyA
+  - DOMAIN-WILDCARD,*.github.*,ProxyA
+  - DOMAIN-WILDCARD,*.reddit.*,ProxyA
+  - DOMAIN-WILDCARD,*.googleapis.*,ProxyA
+  - DOMAIN,s01.riotpixels.net,ProxyA
+  - DOMAIN,registry.npmjs.org,ProxyA
+  - DOMAIN-WILDCARD,*.blizzard.*,ProxyA
+  - DOMAIN-WILDCARD,*.battle.net.*,ProxyA
+  - DOMAIN-WILDCARD,*.battle.net,ProxyA
+  - DOMAIN,cdnjs.cloudflare.com,ProxyA
+  - DOMAIN,ssh.github.com,ProxyA
+  - DOMAIN,copilot,ProxyA
+  - DOMAIN,shared.fastly.steamstatic.com,ProxyA
+  - DOMAIN,store.fastly.steamstatic.com,ProxyA
+  - DOMAIN-WILDCARD,*.openai.*,ProxyA
+  - DOMAIN-WILDCARD,*.chatgpt.*,ProxyA
+  - DOMAIN,openai,ProxyA
+  - DOMAIN,cdn.oaistatic.com,ProxyA
+  - DOMAIN,www.itdog.cn,ProxyA
+  - DOMAIN,corsproxy.io,ProxyA
+  - DOMAIN-WILDCARD,*.oaiusercontent.*,ProxyA
+  - DOMAIN-WILDCARD,*.githubusercontent.*,ProxyA
+  - DOMAIN-WILDCARD,*.linkedin.*,ProxyA
+
+  # ==========================================
+  # VPN ISP (Proxy 101 -> ProxyA)
+  # ==========================================
+  - DOMAIN,sub.dc-sub1.com,ProxyA
+  - DOMAIN,apiv2.pptiok2020.com,ProxyA
+  - DOMAIN,host.ssrbox.com,ProxyA
+
+  # ==========================================
+  # 被禁用的规则 (Riot - enabled="false")
+  # ==========================================
+  # - PROCESS-NAME,RiotClientServices.exe,ProxyA
+  # - PROCESS-NAME,riotclientux.exe,ProxyA
+
+  # ==========================================
+  # 被禁用的规则 (WinApp - enabled="false")
+  # ==========================================
+  # - PROCESS-NAME,WinStore.App.exe,ProxyA
+  # - PROCESS-NAME,todo.exe,ProxyA
+
+  # ==========================================
+  # WebBrowser (Proxy 100 -> tun模式，此处忽略)
+  # ==========================================
+  # 浏览器进程由 tun 模式自动处理
+
+  # ==========================================
+  # 被禁用的规则 (wechat - enabled="false")
+  # ==========================================
+  # 此规则在 Proxifier 中 Applications 字段填写的是域名，应该是配置错误
+
+  # ==========================================
+  # 被禁用的规则 (TeamViewer - enabled="false")
+  # ==========================================
+  # - PROCESS-NAME,TeamViewer.exe,ProxyA
+
+  # ==========================================
+  # Default (Direct - 兜底规则)
+  # ==========================================
+  - MATCH,DIRECT

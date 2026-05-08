@@ -1,0 +1,117 @@
+# Proxifier 规则转换为 Clash Verge Rev Extend Config
+# 转换说明：
+# - Proxy 100/103 (7890 - 自动分流) 已忽略，由 CVR tun 模式处理
+# - Proxy 101/102 (7897 - 全局代理) 转换为 ProxyA
+# - Direct 转换为 DIRECT
+# - Block 转换为 REJECT
+
+payload:
+  # ==========================================
+  # 域名代理规则 (原 Proxy 101/102 - 全局代理)
+  # ==========================================
+  
+  # Domain-Proxy 规则
+  - DOMAIN-SUFFIX,dog.ssrdog.com,ProxyA
+  - DOMAIN-SUFFIX,gitbook.io,ProxyA
+  - DOMAIN-SUFFIX,google.com,ProxyA
+  - DOMAIN-SUFFIX,googleapis.com,ProxyA
+  - DOMAIN-SUFFIX,bing.com,ProxyA
+  - DOMAIN,torrentz2.nz,ProxyA
+  - DOMAIN-SUFFIX,codex.com,ProxyA
+  - DOMAIN-SUFFIX,figma.com,ProxyA
+  - DOMAIN-SUFFIX,steampowered.com,ProxyA
+  - DOMAIN,steam,ProxyA
+  - DOMAIN-SUFFIX,elamigos-games.com,ProxyA
+  - DOMAIN-SUFFIX,youtube.com,ProxyA
+  - DOMAIN-SUFFIX,github.com,ProxyA
+  - DOMAIN-SUFFIX,github.io,ProxyA
+  - DOMAIN-SUFFIX,reddit.com,ProxyA
+  - DOMAIN,s01.riotpixels.net,ProxyA
+  - DOMAIN,registry.npmjs.org,ProxyA
+  - DOMAIN-SUFFIX,blizzard.com,ProxyA
+  - DOMAIN-SUFFIX,battle.net,ProxyA
+  - DOMAIN,cdnjs.cloudflare.com,ProxyA
+  - DOMAIN,ssh.github.com,ProxyA
+  - DOMAIN,copilot,ProxyA
+  - DOMAIN,shared.fastly.steamstatic.com,ProxyA
+  - DOMAIN,store.fastly.steamstatic.com,ProxyA
+  - DOMAIN-SUFFIX,openai.com,ProxyA
+  - DOMAIN-SUFFIX,chatgpt.com,ProxyA
+  - DOMAIN,openai,ProxyA
+  - DOMAIN,cdn.oaistatic.com,ProxyA
+  - DOMAIN,www.itdog.cn,ProxyA
+  - DOMAIN,corsproxy.io,ProxyA
+  - DOMAIN-SUFFIX,oaiusercontent.com,ProxyA
+  - DOMAIN-SUFFIX,githubusercontent.com,ProxyA
+  - DOMAIN-SUFFIX,linkedin.com,ProxyA
+  
+  # VPN ISP 规则
+  - DOMAIN,sub.dc-sub1.com,ProxyA
+  - DOMAIN,apiv2.pptiok2020.com,ProxyA
+  - DOMAIN,host.ssrbox.com,ProxyA
+  
+  # Steam 相关
+  - DOMAIN-SUFFIX,steamcommunity.com,ProxyA
+  - DOMAIN-SUFFIX,steamcloud.com,ProxyA
+  
+  # ==========================================
+  # 域名直连规则 (DIRECT)
+  # ==========================================
+  
+  # Lol国服-domain
+  - DOMAIN,some.url,DIRECT
+  - IP-CIDR,127.234.0.69/32,DIRECT
+  
+  # LAN
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  
+  # Localhost
+  - DOMAIN,localhost,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,::1/128,DIRECT
+  
+  # Domain-Passthrough
+  - DOMAIN-SUFFIX,baidu.com,DIRECT
+  - DOMAIN-SUFFIX,juejin.cn,DIRECT
+  - DOMAIN-SUFFIX,zijieapi.com,DIRECT
+  - DOMAIN-SUFFIX,115.com,DIRECT
+  - DOMAIN-SUFFIX,processon.com,DIRECT
+  - DOMAIN-SUFFIX,zhihu.com,DIRECT
+  - DOMAIN,zhihu,DIRECT
+  - IP-CIDR,140.249.62.213/32,DIRECT
+  - DOMAIN-SUFFIX,tencent.com,DIRECT
+  - DOMAIN-SUFFIX,steamcontent.com,DIRECT
+  - DOMAIN-SUFFIX,steamserver.net,DIRECT
+  - DOMAIN-SUFFIX,wetransfer.com,DIRECT
+  - DOMAIN,www.hdchina.net,DIRECT
+  - DOMAIN-SUFFIX,nvidia.com,DIRECT
+  - DOMAIN,level3.blizzard.com,DIRECT
+  - DOMAIN,ams.game.qq.com,DIRECT
+  - DOMAIN,comm.ams.game.qq.com,DIRECT
+  - DOMAIN-SUFFIX,qq.com,DIRECT
+  - DOMAIN,gamer520,DIRECT
+  - DOMAIN-SUFFIX,switch618.com,DIRECT
+  - DOMAIN,romsfun,DIRECT
+  - DOMAIN-SUFFIX,psgamedl.com,DIRECT
+  - DOMAIN-SUFFIX,romsforever.com,DIRECT
+  - DOMAIN-SUFFIX,romsfast.com,DIRECT
+  - DOMAIN,gamers520,DIRECT
+  - DOMAIN,steamzg,DIRECT
+  - DOMAIN,acgxj.com,DIRECT
+  
+  # ==========================================
+  # 域名阻止规则 (REJECT)
+  # ==========================================
+  
+  # Domain-Blocked
+  - DOMAIN,stats.wp.com,REJECT
+  - DOMAIN,versioncheck.addons.mozilla.org,REJECT
+  - DOMAIN,api.gameanalytics.com,REJECT
+  - DOMAIN,ipv4.tracker.harry.lu,REJECT
+  - DOMAIN,cdp.cloud.unity3d.com,REJECT
+  - DOMAIN,config.uca.cloud.unity3d.com,REJECT
+  - IP-CIDR,169.254.101.168/32,REJECT
+  - DOMAIN,collect.analytics.unity3d.com,REJECT
+  - DOMAIN,install.kugou.com,REJECT
+  - DOMAIN,adsfile.bssdlbig.kugou.com,REJECT
+  - DOMAIN,www2.kugou.kugou.com,REJECT
