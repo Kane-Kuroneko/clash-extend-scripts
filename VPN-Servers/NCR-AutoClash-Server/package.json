@@ -5,8 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"build-deps": "cd ../.. && npm run build:cvr:auto",
-		"start": "tsx ./server.ts \"<YOUR_SUBSCRIPTION_URL>\" 3456",
-		"dev": "tsx watch ./server.ts"
+		"start": "tsx ./server.ts 3456",
+		"dev": "tsx watch ./server.ts 3456"
 	},
 	"dependencies": {
 		"yaml": "^2.5.0"

@@ -6,7 +6,7 @@
 
 - ✅ 支持多种协议解析（Hysteria2、VLESS、Trojan）
 - ✅ 自动应用 Clash Verge Rev 的 Auto-Routing 规则
-- ✅ 输出标准 Clash 订阅格式（Base64 编码）
+- ✅ 输出标准 Clash 配置格式（YAML）
 - ✅ 零缓存，每次请求实时处理
 
 ## 使用方法
@@ -18,27 +18,34 @@
 cd Z:\parser
 npm install
 
-# 在 vpn-server 目录安装依赖
-cd vpn-server
+# 在 NCR-AutoClash-Server 目录安装依赖
+cd VPN-Servers/NCR-AutoClash-Server
 npm install
 ```
 
 ### 2. 启动服务
 
 ```bash
-# 基本用法
-npm start -- "<原始订阅链接>" [端口]
+# 基本用法（默认端口 3456）
+npm start
 
-# 示例
-npm start -- "https://example.com/subscribe?token=xxx" 6000
+# 指定端口
+npx tsx ./server.ts 8000
 ```
 
 ### 3. 在 Clash 中使用
 
-将服务地址填入 Clash 订阅框：
+将服务地址填入 Clash 订阅框，通过 `url` 参数指定原始订阅地址：
 
 ```
-http://localhost:6000/
+http://192.168.0.10:3456?url=<原始订阅地址>
+```
+
+> **提示**：将 `192.168.0.10` 替换为运行该服务的实际服务器 IP 地址。
+
+**示例：**
+```
+http://192.168.0.10:3456?url=https://example.com/subscribe?token=xxx
 ```
 
 ## 工作流程
@@ -52,9 +59,9 @@ Base64 解码 → 节点 URL 列表
     ↓
 Auto-Routing 处理 → proxy-groups + rules
     ↓
-YAML 序列化 → Base64 编码
+YAML 序列化 → HTTP 响应
     ↓
-HTTP 响应 (Clash 订阅格式)
+HTTP 响应 (Clash 配置格式)
 ```
 
 ## 支持的协议
@@ -66,7 +73,7 @@ HTTP 响应 (Clash 订阅格式)
 ## 技术架构
 
 ```
-vpn-server/
+vpn-servers/NCR-AutoClash-Server/
 ├── server.ts              # HTTP 服务器主文件
 ├── yaml-wrapper.ts        # YAML 库包装
 ├── package.json           # 项目配置
@@ -82,8 +89,11 @@ vpn-server/
 ## 开发模式
 
 ```bash
-# 启用热重载
-npm run dev -- "<原始订阅链接>" [端口]
+# 启用热重载（默认端口 3456）
+npm run dev
+
+# 指定端口
+npx tsx watch ./server.ts 8000
 ```
 
 ## 注意事项
@@ -98,12 +108,13 @@ npm run dev -- "<原始订阅链接>" [端口]
 服务启动后会显示：
 
 ```
-📡 原始订阅链接: https://example.com/subscribe?token=xxx
 🔧 处理模式: cvr/auto-routing
-🌐 服务端口: 6000
+🌐 服务端口: ${port}
+📡 使用方式: http://<server-ip>:${port}?url=<原始订阅地址>
 
-✅ 服务已启动: http://localhost:6000
-📋 Clash 订阅链接: http://localhost:6000/
+✅ 服务已启动: http://localhost:${port}
+📋 使用示例: http://localhost:${port}?url=https://example.com/subscribe?token=xxx
+🔒 监听地址: 0.0.0.0:${port}
 
 ⏳ 等待请求...
 ```
@@ -112,13 +123,11 @@ npm run dev -- "<原始订阅链接>" [端口]
 
 ```
 [2026-04-27T12:00:00.000Z] 收到订阅请求
+📡 原始订阅链接: https://example.com/subscribe?token=xxx
 ⬇️  正在获取原始订阅...
-🔓 正在解码 Base64...
-✅ 解析到 50 个节点
-🔄 正在转换节点格式...
-✅ 成功转换 48 个节点
+📋 检测到 YAML 格式订阅
+✅ 从 YAML 中提取到 50 个节点
 ⚙️  正在应用 Auto-Routing 规则...
 📝 正在生成 YAML 配置...
-🔒 正在 Base64 编码...
 ✅ 订阅处理完成并返回
 ```

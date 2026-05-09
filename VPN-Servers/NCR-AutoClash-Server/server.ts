@@ -1,23 +1,14 @@
 import http from 'http';
-import { URL } from 'url';
 import { YAML } from './yaml-wrapper.js';
 
 // 从命令行参数获取配置
 const args = process.argv.slice(2);
-const origVpnUrl = args[0];
-const port = parseInt(args[1] || '6000', 10);
-const host = args[2] || '192.168.0.10'; // 默认监听局域网 IP，避免 Clash TUN 模式冲突
+const port = parseInt(args[0] || '3456', 10);
+const host = args[1] || '0.0.0.0'; // 默认监听所有接口，支持局域网访问
 
-if (!origVpnUrl) {
-	console.error('错误: 必须提供原始 VPN 订阅链接');
-	console.error('用法: tsx ./server.ts <orig-vpn-url> [port]');
-	console.error('示例: tsx ./server.ts "https://example.com/subscribe?token=xxx" 6000');
-	process.exit(1);
-}
-
-console.log(`📡 原始订阅链接: ${origVpnUrl}`);
 console.log(`🔧 处理模式: cvr/auto-routing`);
-console.log(`🌐 服务端口: ${port}\n`);
+console.log(`🌐 服务端口: ${port}`);
+console.log(`📡 使用方式: http://<server-ip>:${port}?url=<原始订阅地址>\n`);
 
 const server = http.createServer(async (req, res) => {
 	// 只处理 GET 请求
@@ -28,7 +19,18 @@ const server = http.createServer(async (req, res) => {
 	}
 
 	try {
+		// 从 URL 参数中获取原始订阅地址
+		const parsedUrl = new URL(req.url!, `http://${req.headers.host}`);
+		const origVpnUrl = parsedUrl.searchParams.get('url');
+		
+		if (!origVpnUrl) {
+			res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+			res.end('错误: 缺少 url 参数\n用法: http://<server-ip>:<port>?url=<原始订阅地址>');
+			return;
+		}
+		
 		console.log(`\n[${new Date().toISOString()}] 收到订阅请求`);
+		console.log(`📡 原始订阅链接: ${origVpnUrl}`);
 		
 		// 1. 获取原始订阅（可能是 Base64 或 YAML）
 		console.log('⬇️  正在获取原始订阅...');
@@ -212,30 +214,11 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, () => {
 	const localUrl = `http://localhost:${port}`;
-	const lanUrl = `http://<your-lan-ip>:${port}`;
 	console.log(`\n✅ 服务已启动: ${localUrl}`);
-	console.log(`📋 Clash 订阅链接: ${localUrl}/`);
-	console.log(`🌐 局域网访问: ${lanUrl}/`);
+	console.log(`📋 使用示例: ${localUrl}?url=https://example.com/subscribe?token=xxx`);
 	console.log(`🔒 监听地址: ${host}:${port}\n`);
 	console.log('⏳ 等待请求...\n');
 });
-
-/**
- * 获取原始订阅（Base64 编码）
- */
-async function fetchRawSubscription(url: string): Promise<string> {
-	const response = await fetch(url, {
-		headers: {
-			'User-Agent': 'ClashMetaForAndroid/2.11.5.Meta Mihomo/0.19',
-		},
-	});
-	
-	if (!response.ok) {
-		throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-	}
-	
-	return await response.text();
-}
 
 /**
  * Base64 解码订阅内容

@@ -153,26 +153,4 @@ export const converters = {
 };
 
 
-namespace ClashRule {
-	type Rule_Match = {
-		ruleType : RuleType,
-		
-	}
-	type Rule_Routng = {
-		
-	}
-	
-	
-	export class RuleClass {
-		constructor(ruleString:string)
-		constructor( ruleObject: { ruleType, value } )
-		
-		constructor() {
-			
-		}
-		
-		toString(){
-			
-		}
-	}
-}
+
