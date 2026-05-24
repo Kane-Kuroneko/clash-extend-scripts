@@ -1,16 +1,35 @@
 import http from 'http';
 import { YAML } from './yaml-wrapper.js';
+import {
+	interceptConsole,
+	handleHttpRequest,
+	handleUpgrade,
+	startKeepAlive,
+	openBrowser,
+} from './web-gui.js';
 
 // 从命令行参数获取配置
-const args = process.argv.slice(2);
-const port = parseInt(args[0] || '3456', 10);
-const host = args[1] || '0.0.0.0'; // 默认监听所有接口，支持局域网访问
+const rawArgs = process.argv.slice(2);
+const webGui = rawArgs.includes('--web-gui');
+const positional = rawArgs.filter((a) => !a.startsWith('--'));
+const port = parseInt(positional[0] || '3456', 10);
+const host = positional[1] || '0.0.0.0'; // 默认监听所有接口，支持局域网访问
+
+// 启用 Web GUI：在第一行 console 之前拦截，确保启动日志也能被推到网页
+if (webGui) {
+	interceptConsole();
+}
 
 console.log(`🔧 处理模式: cvr/auto-routing`);
 console.log(`🌐 服务端口: ${port}`);
 console.log(`📡 使用方式: http://<server-ip>:${port}?url=<原始订阅地址>\n`);
 
 const server = http.createServer(async (req, res) => {
+	// Web GUI 启用时优先把 / 路径交给 GUI 模块
+	if (webGui && req.method === 'GET' && handleHttpRequest(req, res)) {
+		return;
+	}
+
 	// 只处理 GET 请求
 	if (req.method !== 'GET') {
 		res.writeHead(405, { 'Content-Type': 'text/plain' });
@@ -212,11 +231,30 @@ const server = http.createServer(async (req, res) => {
 	}
 });
 
+// 处理 WebSocket 升级请求（仅在 web-gui 模式下）
+server.on('upgrade', (req, socket, head) => {
+	if (webGui) {
+		handleUpgrade(req, socket as any, head);
+	} else {
+		socket.destroy();
+	}
+});
+
 server.listen(port, host, () => {
 	const localUrl = `http://localhost:${port}`;
 	console.log(`\n✅ 服务已启动: ${localUrl}`);
 	console.log(`📋 使用示例: ${localUrl}?url=https://example.com/subscribe?token=xxx`);
 	console.log(`🔒 监听地址: ${host}:${port}\n`);
+
+	if (webGui) {
+		startKeepAlive();
+		console.log(`🖥️  Web GUI: ${localUrl}`);
+		console.log('🌐 正在自动打开浏览器，关闭网页后服务会自动停止...\n');
+		openBrowser(localUrl);
+	} else {
+		console.log('💡 提示: 启动时附加 --web-gui 可打开网页版日志面板\n');
+	}
+
 	console.log('⏳ 等待请求...\n');
 });
 

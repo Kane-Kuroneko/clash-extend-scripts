@@ -6,9 +6,12 @@
 	"scripts": {
 		"build-deps": "cd ../.. && npm run build:cvr:auto",
 		"start": "tsx ./server.ts 3456",
+		"start:gui": "tsx ./server.ts 3456 --web-gui",
 		"dev": "tsx watch ./server.ts 3456"
 	},
 	"dependencies": {
+		"@types/ws": "^8.18.1",
+		"ws": "^8.20.1",
 		"yaml": "^2.5.0"
 	},
 	"devDependencies": {

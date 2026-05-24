@@ -1,0 +1,379 @@
+# Proxifier 配置转换为 Mihomo Global Extend Config
+# 转换时间: 2026-04-21
+# 原始配置: Kuroneko-PC.ppx
+
+# ==========================================
+# 进程匹配模式配置
+# ==========================================
+# always: 强制匹配所有进程
+# strict: 默认,由 Clash 判断
+# off: 不匹配进程(推荐路由器使用)
+find-process-mode: strict
+
+# ==========================================
+# 规则列表
+# ==========================================
+rules:
+  # ==========================================
+  # 本地地址直连
+  # ==========================================
+  # [Localhost] - 本地回环地址直连
+  - DOMAIN,localhost,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+
+  # [%ComputerName%] - 计算机名变量(Mihomo不支持,需手动替换或忽略)
+  # 注意: Proxifier的%ComputerName%变量在Mihomo中无法直接使用
+  # 建议使用IP-CIDR规则或DOMAIN规则替代
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+
+  # ==========================================
+  # 阻断规则 (Blocked)
+  # ==========================================
+  # [Domain-Blocked] - 阻断的域名
+  - DOMAIN,stats.wp.com,REJECT
+  - DOMAIN,versioncheck.addons.mozilla.org,REJECT
+  - DOMAIN,api.gameanalytics.com,REJECT
+  - DOMAIN,ipv4.tracker.harry.lu,REJECT
+  - DOMAIN,cdp.cloud.unity3d.com,REJECT
+  - DOMAIN,config.uca.cloud.unity3d.com,REJECT
+  - DOMAIN,collect.analytics.unity3d.com,REJECT
+  - DOMAIN,install.kugou.com,REJECT
+  - DOMAIN,adsfile.bssdlbig.kugou.com,REJECT
+  - DOMAIN,www2.kugou.kugou.com,REJECT
+  - IP-CIDR,169.254.101.168/32,REJECT,no-resolve
+
+  # [Blocked APP] - 阻断的应用 (googleupdate.exe)
+  - PROCESS-NAME,googleupdate.exe,REJECT
+
+  # ==========================================
+  # 直连规则 (Direct/Passthrough)
+  # ==========================================
+  # [Lol国服-domain] - 英雄联盟国服直连
+  - DOMAIN,some.url,DIRECT
+  - IP-CIDR,127.234.0.69/32,DIRECT,no-resolve
+  # IP地址 140.249.62.213 (在Domain-Passthrough中)
+  - IP-CIDR,140.249.62.213/32,DIRECT,no-resolve
+
+  # [Lol国服-app] - 英雄联盟客户端直连
+  - PROCESS-NAME,leagueclient.exe,DIRECT
+  - PROCESS-NAME,riotclientservices.exe,DIRECT
+  - PROCESS-NAME,leagueclientuxrender.exe,DIRECT
+  - PROCESS-NAME,sguard64.exe,DIRECT
+  - PROCESS-PATH,W:\Downloads\英雄联盟(26)\Launcher\Client.exe,DIRECT
+  - PROCESS-NAME,tcls_core.exe,DIRECT
+
+  # [Apps-Passthrough] - 直连的应用列表
+  - PROCESS-NAME,ramboplay.ra2.exe,DIRECT
+  - PROCESS-NAME,systemsettings.exe,DIRECT
+  - PROCESS-NAME,ssh.exe,DIRECT
+  - PROCESS-NAME,searchhost.exe,DIRECT
+  - PROCESS-NAME,winstore.app.exe,DIRECT
+  - PROCESS-NAME,aria2c.exe,DIRECT
+  - PROCESS-NAME,baidunetdisk.exe,DIRECT
+  - PROCESS-NAME,cloudmusic.exe,DIRECT
+  - PROCESS-NAME,vkproxy.exe,DIRECT
+  - PROCESS-NAME,vkdns.exe,DIRECT
+  - PROCESS-NAME,vkdownload_x64.exe,DIRECT
+  - PROCESS-NAME,bitcomet.exe,DIRECT
+  - PROCESS-NAME,baidunetdiskhost.exe,DIRECT
+  - PROCESS-NAME,bililive_browser.exe,DIRECT
+  - PROCESS-NAME,todo.exe,DIRECT
+  - PROCESS-NAME,sgtool.exe,DIRECT
+  - PROCESS-NAME,kgservice.exe,DIRECT
+  - PROCESS-NAME,wechet.exe,DIRECT
+  - PROCESS-NAME,localsend_app.exe,DIRECT
+
+  # 其他自动创建的直连应用
+  - PROCESS-NAME,clash-win64.exe,DIRECT
+  - PROCESS-NAME,com.docker.backend.exe,DIRECT
+  - PROCESS-NAME,svchost.exe,DIRECT
+  - PROCESS-NAME,livehime.exe,DIRECT
+
+  # [V2Ray] - V2Ray 相关应用直连
+  - PROCESS-NAME,v2rayN.exe,DIRECT
+  - PROCESS-NAME,xray.exe,DIRECT
+
+  # [Netch] - Netch 直连
+  - PROCESS-NAME,Netch.exe,DIRECT
+
+  # [Clash] - Clash 相关应用直连
+  - PROCESS-NAME,clash-win64.exe,DIRECT
+  - PROCESS-NAME,Clash for Windows.exe,DIRECT
+  # 注意: 进程名在YAML中需要用引号包裹包含空格的名称
+  - PROCESS-NAME,"Clash for Windows.exe",DIRECT
+
+  # [Domain-Passthrough] - 直连域名列表
+  # 百度系列
+  - DOMAIN-SUFFIX,baidu.com,DIRECT
+  # 掘金
+  - DOMAIN-SUFFIX,juejin.cn,DIRECT
+  # 字节API
+  - DOMAIN-SUFFIX,zijieapi.com,DIRECT
+  # 115网盘
+  - DOMAIN-SUFFIX,115.com,DIRECT
+  # ProcessOn
+  - DOMAIN-SUFFIX,processon.com,DIRECT
+  # 知乎
+  - DOMAIN-SUFFIX,zhihu.com,DIRECT
+  - DOMAIN,zhihu,DIRECT
+  # 腾讯系列
+  - DOMAIN-SUFFIX,tencent.com,DIRECT
+  - DOMAIN-SUFFIX,qq.com,DIRECT
+  # Steam内容(国内CDN)
+  - DOMAIN-SUFFIX,steamcontent.com,DIRECT
+  - DOMAIN-SUFFIX,steamserver.net,DIRECT
+  # WeTransfer下载
+  - DOMAIN-SUFFIX,wetransfer.com,DIRECT
+  # HDChina
+  - DOMAIN,www.hdchina.net,DIRECT
+  # NVIDIA下载
+  - DOMAIN-SUFFIX,nvidia.com,DIRECT
+  # Blizzard国内CDN
+  - DOMAIN-SUFFIX,blizzard.com,DIRECT
+  # QQ游戏
+  - DOMAIN,ams.game.qq.com,DIRECT
+  - DOMAIN,comm.ams.game.qq.com,DIRECT
+  # 游戏资源站
+  - DOMAIN,gamer520,DIRECT
+  - DOMAIN-SUFFIX,switch618.com,DIRECT
+  - DOMAIN,romsfun,DIRECT
+  - DOMAIN-SUFFIX,psgamedl.com,DIRECT
+  - DOMAIN-SUFFIX,romsforever.com,DIRECT
+  - DOMAIN-SUFFIX,romsfast.com,DIRECT
+  - DOMAIN,gamers520,DIRECT
+  - DOMAIN,steamzg,DIRECT
+  - DOMAIN,acgxj.com,DIRECT
+  # level3.blizzard.* (已在blizzard.com中覆盖)
+
+  # [Steam-download] - Steam下载直连(仅steam.exe)
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-KEYWORD,dl.eccdnx)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,dl.steam.clngaa.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,xz.pphimalayanrt.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-SUFFIX,steamcontent.com)),DIRECT
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-KEYWORD,steampipe)),DIRECT
+
+  # ==========================================
+  # 代理规则 (Proxy)
+  # ==========================================
+  
+  # [Domain-Auto-Clash] - 特定域名走代理 (Proxy 100: ClashVergeRev HTTPS 7890)
+  # 注意: 原配置bilibili无后缀,可能是短名称或完整域名
+  - DOMAIN,bilibili,Proxy
+  - DOMAIN-SUFFIX,bilibili.com,Proxy
+  - DOMAIN-KEYWORD,youtube,Proxy
+
+  # [WebBrowser] - 浏览器走代理 (Proxy 100: ClashVergeRev HTTPS 7890)
+  - PROCESS-NAME,msedge.exe,Proxy
+  - PROCESS-NAME,chrome.exe,Proxy
+  - PROCESS-NAME,115chrome.exe,Proxy
+  - PROCESS-NAME,twinkstar.exe,Proxy
+  - PROCESS-NAME,msedgewebview2.exe,Proxy
+
+  # [steamcommunity] - Steam社区走代理 (Proxy 102: ClashParty HTTPS 7897)
+  # 特定进程+特定域名的组合规则
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-KEYWORD,steamcommunity)),Proxy
+  - AND,((PROCESS-NAME,steamservice.exe),(DOMAIN-KEYWORD,steamcommunity)),Proxy
+  - AND,((PROCESS-NAME,steamwebhelper.exe),(DOMAIN-KEYWORD,steamcommunity)),Proxy
+  - AND,((PROCESS-NAME,chrome.exe),(DOMAIN-KEYWORD,steamcommunity)),Proxy
+  - AND,((PROCESS-NAME,msedge.exe),(DOMAIN-KEYWORD,steamcommunity)),Proxy
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,store.fastly.steamstatic.com)),Proxy
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN,shared.fastly.steamstatic.com)),Proxy
+  - AND,((PROCESS-NAME,steam.exe),(DOMAIN-KEYWORD,steamcloud)),Proxy
+
+  # [Steam] - Steam应用走代理 (Proxy 102: ClashParty HTTPS 7897)
+  - PROCESS-NAME,steam.exe,Proxy
+  - PROCESS-NAME,steamservice.exe,Proxy
+  - PROCESS-NAME,steamwebhelper.exe,Proxy
+
+  # [App-Auto-Clash] - VMware走代理 (Proxy 103: ClashVergeRev SOCKS5 7890)
+  - PROCESS-NAME,vmware.exe,Proxy
+  - PROCESS-NAME,vmware-vmx.exe,Proxy
+  - PROCESS-NAME,vmnat.exe,Proxy
+  - PROCESS-NAME,vmnetdhcp.exe,Proxy
+
+  # [Gaming] - Playnite走代理 (Proxy 101: ClashParty SOCKS5 7897)
+  - PROCESS-NAME,Playnite.DesktopApp.exe,Proxy
+
+  # [Apps-Proxy] - 代理应用列表 (Proxy 101: ClashParty SOCKS5 7897)
+  - PROCESS-NAME,battle.net.exe,Proxy
+  - PROCESS-NAME,figma.exe,Proxy
+  - PROCESS-NAME,firefox.exe,Proxy
+  - PROCESS-NAME,telegram.exe,Proxy
+  - PROCESS-NAME,webstorm64.exe,Proxy
+  - PROCESS-NAME,w32time.exe,Proxy
+  - PROCESS-NAME,origin.exe,Proxy
+  - PROCESS-NAME,zclient.exe,Proxy
+
+  # [Domain-Proxy] - 代理域名列表 (Proxy 101: ClashParty SOCKS5 7897)
+  # 订阅/VPN相关
+  - DOMAIN,sub.dc-sub1.com,Proxy
+  - DOMAIN,apiv2.pptiok2020.com,Proxy
+  - DOMAIN,host.ssrbox.com,Proxy
+  # GitBook
+  - DOMAIN-KEYWORD,gitbook,Proxy
+  # Google
+  - DOMAIN-KEYWORD,google,Proxy
+  # Bing
+  - DOMAIN-KEYWORD,bing,Proxy
+  # 种子站
+  - DOMAIN,torrentz2.nz,Proxy
+  # Codex
+  - DOMAIN-KEYWORD,codex,Proxy
+  # Figma
+  - DOMAIN-KEYWORD,figma,Proxy
+  # Steam
+  - DOMAIN-SUFFIX,steampowered.com,Proxy
+  - DOMAIN,steam,Proxy
+  # Elamigos
+  - DOMAIN-KEYWORD,elamigos-games,Proxy
+  # YouTube
+  - DOMAIN-KEYWORD,youtube,Proxy
+  # GitHub
+  - DOMAIN-KEYWORD,github,Proxy
+  # Reddit
+  - DOMAIN-KEYWORD,reddit,Proxy
+  # Google API
+  - DOMAIN-SUFFIX,googleapis.com,Proxy
+  # Riot Pixels
+  - DOMAIN,s01.riotpixels.net,Proxy
+  # NPM
+  - DOMAIN,registry.npmjs.org,Proxy
+  # Blizzard/Battle.net
+  - DOMAIN-KEYWORD,blizzard,Proxy
+  - DOMAIN-KEYWORD,battle.net,Proxy
+  # Cloudflare CDN
+  - DOMAIN,cdnjs.cloudflare.com,Proxy
+  # GitHub SSH
+  - DOMAIN,ssh.github.com,Proxy
+  # Copilot/OpenAI
+  - DOMAIN,copilot,Proxy
+  - DOMAIN-KEYWORD,openai,Proxy
+  - DOMAIN-KEYWORD,chatgpt,Proxy
+  - DOMAIN,openai,Proxy
+  - DOMAIN,cdn.oaistatic.com,Proxy
+  - DOMAIN,www.itdog.cn,Proxy
+  - DOMAIN,corsproxy.io,Proxy
+  - DOMAIN-SUFFIX,oaiusercontent.com,Proxy
+  # LinkedIn
+  - DOMAIN-KEYWORD,linkedin,Proxy
+  # Fastly Steam CDN
+  - DOMAIN,shared.fastly.steamstatic.com,Proxy
+  - DOMAIN,store.fastly.steamstatic.com,Proxy
+
+  # ==========================================
+  # 已禁用的规则 (保留注释)
+  # ==========================================
+  # [Epic Games Browse] - 已禁用
+  # - PROCESS-NAME,EpicGamesLauncher.exe,Proxy
+  # - PROCESS-NAME,EpicWebHelper.exe,Proxy
+  
+  # [Riot] - 已禁用
+  # - PROCESS-NAME,RiotClientServices.exe,Proxy
+  # - PROCESS-NAME,riotclientux.exe,Proxy
+  
+  # [WinApp] - 已禁用
+  # - PROCESS-NAME,WinStore.App.exe,Proxy
+  # - PROCESS-NAME,todo.exe,Proxy
+  
+  # [wechat] - 已禁用
+  # - PROCESS-NAME,shmmsns.qpic.cn,Proxy
+  
+  # [TeamViewer.exe] - 已禁用
+  # - PROCESS-NAME,TeamViewer.exe,Proxy
+
+  # ==========================================
+  # 默认规则
+  # ==========================================
+  # [Default] - 默认直连
+  - MATCH,DIRECT
+
+# ==========================================
+# 代理组定义
+# ==========================================
+# 注意: 这里定义的代理组对应原Proxifier配置中的Proxy列表
+# 您需要在实际的CV配置中添加这些代理节点
+
+proxy-groups:
+  # 默认代理组 - 对应 Proxy 100 (ClashVergeRev HTTPS 7890)
+  - name: "ClashVergeRev-HTTPS"
+    type: select
+    proxies:
+      - DIRECT
+      # - 您的节点名称
+
+  # 代理组 - 对应 Proxy 101 (ClashParty SOCKS5 7897)
+  - name: "ClashParty-SOCKS5"
+    type: select
+    proxies:
+      - DIRECT
+      # - 您的节点名称
+
+  # 代理组 - 对应 Proxy 102 (ClashParty HTTPS 7897)
+  - name: "ClashParty-HTTPS"
+    type: select
+    proxies:
+      - DIRECT
+      # - 您的节点名称
+
+  # 代理组 - 对应 Proxy 103 (ClashVergeRev SOCKS5 7890)
+  - name: "ClashVergeRev-SOCKS5"
+    type: select
+    proxies:
+      - DIRECT
+      # - 您的节点名称
+
+  # 统一代理组 (用于简化规则,可选)
+  - name: "Proxy"
+    type: select
+    proxies:
+      - ClashVergeRev-HTTPS
+      - ClashParty-SOCKS5
+      - ClashParty-HTTPS
+      - ClashVergeRev-SOCKS5
+      - DIRECT
+
+# ==========================================
+# 转换说明
+# ==========================================
+# 1. Proxifier 的 Proxy ID 映射:
+#    - 100: ClashVergeRev (HTTPS, 127.0.0.1:7890)
+#    - 101: ClashParty (SOCKS5, 127.0.0.1:7897)
+#    - 102: ClashParty (HTTPS, 127.0.0.1:7897)
+#    - 103: ClashVergeRev (SOCKS5, 127.0.0.1:7890)
+#
+# 2. 转换规则:
+#    - Applications -> PROCESS-NAME / PROCESS-PATH
+#    - Targets (域名) -> DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD
+#    - Targets (IP) -> IP-CIDR
+#    - 同时包含 Applications 和 Targets 的规则 -> AND 逻辑组合
+#    - Action: Direct -> DIRECT
+#    - Action: Proxy -> Proxy (需在proxy-groups中配置)
+#    - Action: Block -> REJECT
+#
+# 3. 通配符转换策略:
+#    - *.xxx.* -> DOMAIN-KEYWORD,xxx (更宽松的匹配)
+#    - *.xxx.com -> DOMAIN-SUFFIX,xxx.com
+#    - xxx* -> DOMAIN-KEYWORD,xxx
+#
+# 4. 注意事项:
+#    - 通配符规则 (*.xxx.*) 已转换为 DOMAIN-SUFFIX 或 DOMAIN-KEYWORD
+#    - 短名称 (如 steam, zhihu) 保留为 DOMAIN
+#    - IP地址范围使用 CIDR 格式
+#    - 已禁用的规则保留在注释中
+#    - %ComputerName% 变量在 Mihomo 中不支持,已忽略
+#    - leagueclient.exe 同时出现在直连和代理规则中,以先匹配为准
+#
+# 5. 使用前需调整:
+#    - 在 proxy-groups 中添加实际的代理节点
+#    - 根据实际需求调整策略组类型 (select/url-test/fallback)
+#    - 检查 PROCESS-PATH 的路径是否正确
+#    - 确认 find-process-mode 设置是否符合需求
+#    - 检查规则优先级顺序是否符合预期
+#    - 测试关键应用的网络连接是否正常
+#
+# 6. 重要提醒:
+#    - Mihomo 规则从上到下匹配,第一条匹配的规则生效
+#    - 进程匹配需要在 TUN 模式下才能正常工作
+#    - 建议在应用前先在测试环境验证
+#    - 建议保留原始 Proxifier 配置作为备份

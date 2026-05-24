@@ -17,7 +17,7 @@
 		"test:unit": "tsx run-unit-tests.ts",
 		"test:integration": "tsx tests/run-all-tests.ts",
 		"test:all": "npm run build:all && npm test",
-		"build:all": "npm run build:cfw:global && npm run build:cfw:auto && npm run build:cvr:global && npm run build:party:global && npm run build:cvr:auto && npm run build:party:auto"
+		"build:all": "tsx ./scripts/build-all.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.23",

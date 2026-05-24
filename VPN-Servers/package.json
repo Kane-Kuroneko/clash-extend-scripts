@@ -8,7 +8,8 @@
 	],
 	"scripts": {
 		"install:all": "npm install",
-		"start:ncr": "npm start -w NCR-AutoClash-Server",
+		"start:gui:ncr": "npm run start:gui -w NCR-AutoClash-Server",
+		"start:cli:ncr": "npm run start -w NCR-AutoClash-Server",
 		"dev:ncr": "npm run dev -w NCR-AutoClash-Server"
 	}
 }
