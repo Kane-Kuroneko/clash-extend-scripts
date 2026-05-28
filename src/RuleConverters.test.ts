@@ -108,7 +108,7 @@ describe('RuleConverters 测试', () => {
 	describe('autoDetectRuleType', () => {
 		it('应该识别 DOMAIN-SUFFIX 类型(+.前缀)', () => {
 			const result = converters.autoDetectRuleType('+.google.com');
-			assert.deepStrictEqual(result, ['DOMAIN-SUFFIX', '+.google.com']);
+			assert.deepStrictEqual(result, ['DOMAIN-SUFFIX', 'google.com']);
 		});
 
 		it('应该识别 DOMAIN 类型(无前缀)', () => {
@@ -118,9 +118,11 @@ describe('RuleConverters 测试', () => {
 
 		it('应该处理各种域名格式', () => {
 			const testCases = [
-				{ input: '+.baidu.com', expected: ['DOMAIN-SUFFIX', '+.baidu.com'] },
+				{ input: '+.baidu.com', expected: ['DOMAIN-SUFFIX', 'baidu.com'] },
 				{ input: 'baidu.com', expected: ['DOMAIN', 'baidu.com'] },
-				{ input: '+.example.org', expected: ['DOMAIN-SUFFIX', '+.example.org'] },
+				{ input: '+.example.org', expected: ['DOMAIN-SUFFIX', 'example.org'] },
+				{ input: '*.example.net', expected: ['DOMAIN-SUFFIX', 'example.net'] },
+				{ input: '+.*.bilibili.com', expected: ['DOMAIN-SUFFIX', 'bilibili.com'] },
 				{ input: 'example.org', expected: ['DOMAIN', 'example.org'] }
 			];
 

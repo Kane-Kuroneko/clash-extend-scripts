@@ -13,7 +13,7 @@ import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
 const mockCompileTimeRules = {
 	Loyalsoldier_GFW: ['openai.com', 'google.com', 'facebook.com', 'twitter.com'],
 	Loyalsoldier_Proxy: ['netflix.com', 'youtube.com', 'spotify.com'],
-	Loyalsoldier_Telegram: ['telegram.org', 't.me'],
+	Loyalsoldier_Telegram: ['IP-CIDR,91.108.4.0/22,no-resolve', 'IP-CIDR6,2001:67c:4e8::/48,no-resolve'],
 	Microsoft: ['DOMAIN-SUFFIX,microsoft.com', 'DOMAIN-SUFFIX,office.com', 'DOMAIN-KEYWORD,windows'],
 	Loyalsoldier_Apple: ['apple.com', 'icloud.com'],
 	Loyalsoldier_Direct: ['baidu.com', 'qq.com', 'taobao.com'],
@@ -140,6 +140,24 @@ describe('ConfigFactory 测试', () => {
 			assert.ok(copilotAIIndex >= 0, '应该包含 copilot.microsoft.com 的 AI 规则');
 			assert.ok(microsoftIndex >= 0, '应该包含 Microsoft 通用规则');
 			assert.ok(copilotAIIndex < microsoftIndex, 'Copilot AI 规则应该先于 Microsoft 通用规则');
+		});
+
+		it('Telegram CIDR 规则应该保留 no-resolve 并分流到 Telegram 组', () => {
+			const config = ConfigFactory.createConfig(
+				'auto-routing',
+				mockSource as any,
+				mockDeps as any,
+				mockParams
+			) as AutoRoutingGroup;
+
+			assert.ok(
+				config.source.rules.includes('IP-CIDR,91.108.4.0/22,📲 Telegram,no-resolve'),
+				'应该包含 Telegram IPv4 CIDR 规则'
+			);
+			assert.ok(
+				config.source.rules.includes('IP-CIDR6,2001:67c:4e8::/48,📲 Telegram,no-resolve'),
+				'应该包含 Telegram IPv6 CIDR 规则'
+			);
 		});
 	});
 

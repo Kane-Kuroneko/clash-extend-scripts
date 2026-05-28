@@ -154,7 +154,7 @@ export class Clash {
 			rules.push([type, groupName] as unknown as RuleArray);
 		} else if (tail) {
 			if (this.checkExistMatchRule(rules)) {
-				rules.splice(rules.length - 2, 0, [type, value, groupName] as unknown as RuleArray);
+				rules.splice(rules.length - 1, 0, [type, value, groupName] as unknown as RuleArray);
 			}
 		} else {
 			rules.unshift([type, value, groupName] as unknown as RuleArray);

@@ -31,7 +31,120 @@
 于是Dual Clash Arch应运而生:
 - Clash A:开启Tun模式,使用auto-routing自动分流模式接管系统所有流量,,但bypass 127.0.0.1:xxxx的流量
 - Clash B:不开启Tun和系统代理,使用global-proxy全局分流模式,仅设置并后台运行127.0.0.1:xxxx的服务器  
-详细配置见
+
+### 架构原理
+**为什么需要双Clash架构？**
+
+1. **安全兜底**：单客户端自动分流存在漏网之鱼的风险，一旦敏感域名被错误直连可能造成严重后果。双架构提供"全局代理"作为安全兜底
+2. **应用兼容性**：某些应用不走系统代理或 hardcoded 直连，需要通过独立代理实例处理
+3. **职责分离**：
+   - Clash A 负责智能分流（国内直连、国外代理）
+   - Clash B 负责全局代理（为特定应用提供固定代理入口）
+
+### 配置步骤
+
+#### 1. 准备 Clash B（全局代理实例）
+
+```bash
+# 构建全局代理模式配置
+npm run build:cvr:global  # 或其他客户端
+```
+
+**Clash B 配置要点：**
+- ❌ **不开启 TUN 模式**
+- ❌ **不设置系统代理**
+- ✅ 监听本地端口（如 `127.0.0.1:7890`）
+- ✅ 使用 `global-proxy` 模式（仅 GEOIP,CN 直连，其余全部代理）
+- ✅ 后台静默运行
+
+```yaml
+# Clash B 配置示例
+mixed-port: 7890
+allow-lan: false
+mode: Rule
+log-level: info
+
+tun:
+  enable: false  # 关键：不开启TUN
+
+proxy-groups:
+  - name: "🫧 Global Proxy 🫧"
+    type: select
+    proxies:
+      - 你的代理节点1
+      - 你的代理节点2
+
+rules:
+  - GEOIP,CN,❄️ China Geo-IP ❄️
+  - MATCH,🫧 Global Proxy 🫧
+```
+
+#### 2. 准备 Clash A（智能分流实例）
+
+```bash
+# 构建自动路由模式配置
+npm run build:cvr:auto  # 或其他客户端
+```
+
+**Clash A 配置要点：**
+- ✅ **开启 TUN 模式**（接管系统所有流量）
+- ✅ **设置系统代理**
+- ✅ 使用 `auto-routing` 模式（12+ 智能分组）
+- ✅ **Bypass Clash B 地址**（避免递归代理）
+
+```yaml
+# Clash A 配置示例
+mixed-port: 7891  # 使用不同端口
+allow-lan: true
+mode: Rule
+log-level: info
+
+tun:
+  enable: true  # 关键：开启TUN
+  stack: mixed
+  dns-hijack:
+    - any:53
+
+# 关键：添加绕过规则
+rules:
+  # 最高优先级：绕过 Clash B 的地址
+  - IP-CIDR,127.0.0.1/32,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  
+  # 其他自动分流规则...
+  - DOMAIN-SUFFIX,google.com,🫧 Proxy A 🫧
+  - GEOIP,CN,🟢 China Direct
+  - MATCH,🐟 Final
+```
+
+#### 3. 应用配置
+
+在需要全局代理的应用中（如 Claude Desktop、Telegram 等）：
+- 设置代理服务器为 `http://127.0.0.1:7890`（Clash B 的监听地址）
+- 这些应用的流量将强制走全局代理，不受 Clash A 分流规则影响
+
+### 流量路径示意
+
+```
+[应用程序]
+    ↓
+    ├─> 应用内置代理 → 127.0.0.1:7890 (Clash B) → 全局代理 → 互联网
+    │
+    └─> 系统代理 → TUN (Clash A) → 智能分流
+                              ├─ 国内流量 → DIRECT
+                              ├─ GFW站点 → Proxy A
+                              ├─ 国外媒体 → Foreign Media
+                              └─ 漏网之鱼 → Final
+```
+
+### 注意事项
+
+1. **端口冲突**：Clash A 和 Clash B 必须使用不同端口
+2. **Bypass 规则**：Clash A 必须绕过 Clash B 的监听地址，否则会形成递归代理
+3. **性能开销**：双实例会占用更多内存（约 2x），但现代设备通常无压力
+4. **维护成本**：需要同时管理两个配置文件和更新订阅
+
+详细配置示例见：[proxifier-to-mihomo.yaml](proxifier-to-mihomo.yaml)
 ## ✨ 功能特性
 
 - 🎯 **多种客户端支持**: Clash for Windows、Clash Verge、Clash Party (Mihomo Party)
@@ -150,15 +263,3 @@ MIT
 - 构建产物位于 `dist/` 目录，可直接导入 Clash 客户端使用
 - 自动路由模式首次构建可能需要更长时间（需下载规则数据）
 - 自定义规则支持热更新，修改后重新构建即可生效
-
-
-
-### Dual Clash Arch Config
-
-- ClashA Conf
-	- 开启Tun模式
-   - 使用auto-routing分流模式(js脚本或server)
-   - bypass ClashB代理地址
-   - 
-   - 根据需要添加自定义分流
-   - 

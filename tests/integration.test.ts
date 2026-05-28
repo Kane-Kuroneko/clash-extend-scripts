@@ -487,6 +487,28 @@ describe('CVR 客户端业务逻辑测试', () => {
 				'Microsoft 规则应该包含 DOMAIN-KEYWORD,microsoft'
 			);
 		});
+
+		it('应该保留 GFW、Apple 和 Telegram 的非媒体规则覆盖', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const rules = result.output.rules || [];
+			
+			assert.ok(
+				rules.includes('DOMAIN-SUFFIX,google.com,❄️ GFW'),
+				'GFW 规则不应该被国外媒体过滤器误删'
+			);
+			assert.ok(
+				rules.includes('DOMAIN-SUFFIX,apps.apple.com,🍎 Apple'),
+				'Apple 规则不应该被国外媒体过滤器误删'
+			);
+			assert.ok(
+				rules.includes('IP-CIDR,91.108.4.0/22,📲 Telegram,no-resolve'),
+				'Telegram IPv4 CIDR 规则应该被保留'
+			);
+		});
 	});
 
 	describe('AI 分流规则测试', () => {

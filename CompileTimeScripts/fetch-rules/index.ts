@@ -15,10 +15,10 @@ export const fetchRules = async () => {
 		fetchWithRetry('CN_bilibili', () => fetchGithubRules(CN_bilibili)),
 		fetchWithRetry('INTL_bilibili', () => fetchGithubRules(INTL_bilibili)),
 		fetchWithRetry('Blocked_By_GFW', () => fetchGithubRules(Blocked_By_GFW)),
-		fetchWithRetry('Loyalsoldier_GFW', () => fetchLoyalsoldierRules(Loyalsoldier_GFW)),
-		fetchWithRetry('Loyalsoldier_Proxy', () => fetchLoyalsoldierRules(Loyalsoldier_Proxy)),
-		fetchWithRetry('Loyalsoldier_Telegram', () => fetchLoyalsoldierRules(Loyalsoldier_Telegram)),
-		fetchWithRetry('Loyalsoldier_Apple', () => fetchLoyalsoldierRules(Loyalsoldier_Apple)),
+		fetchWithRetry('Loyalsoldier_GFW', () => fetchLoyalsoldierDomainRules(Loyalsoldier_GFW)),
+		fetchWithRetry('Loyalsoldier_Proxy', () => fetchForeignMediaRules(Loyalsoldier_Proxy)),
+		fetchWithRetry('Loyalsoldier_Telegram', () => fetchTelegramCidrRules(Loyalsoldier_Telegram)),
+		fetchWithRetry('Loyalsoldier_Apple', () => fetchLoyalsoldierDomainRules(Loyalsoldier_Apple)),
 		fetchWithRetry('Loyalsoldier_Direct', () => fetchLoyalsoldierDirect(Loyalsoldier_Direct_Filtered)),
 		fetchWithRetry('Microsoft', () => fetchMicrosoftRules(Microsoft_Rules)),
 		fetchWithRetry('AI', () => fetchAIRules()),
@@ -59,11 +59,9 @@ then( ( text ) => {
 } );
 
 /**
- * 获取Loyalsoldier/clash-rules规则
- * 直接从raw.githubusercontent.com获取YAML文件
- * 只保留真正的国外媒体服务域名(过滤掉 Microsoft/Apple/Google/开发工具/CDN 等)
+ * 获取 Loyalsoldier/clash-rules 的通用域名规则
  */
-export const fetchLoyalsoldierRules = (url: string) => fetch(url, {
+export const fetchLoyalsoldierDomainRules = (url: string) => fetch(url, {
 	headers: {
 		"User-Agent" : "Clash-Parser/1.0"
 	},
@@ -76,30 +74,42 @@ export const fetchLoyalsoldierRules = (url: string) => fetch(url, {
 		return res.text();
 	})
 	.then(text => {
-		// 解析YAML格式的规则文件
-		const yaml: ResContents = parse(text);
-		if (!yaml.payload || !Array.isArray(yaml.payload)) return [];
-		
-		// 过滤并提取域名
-		return yaml.payload
-			.filter(rule => {
-				// 过滤掉 IP-CIDR 和 IP-CIDR6 规则
-				return !rule.startsWith('IP-CIDR,') && !rule.startsWith('IP-CIDR6,');
-			})
-			.map(rule => {
-				// 处理 '+.domain.com' 格式(表示 DOMAIN-SUFFIX)
-				if (rule.startsWith('+.')) {
-					return rule.substring(2); // 去掉 '+.' 前缀
-				}
-				// 处理 'DOMAIN,xxx' 或 'DOMAIN-SUFFIX,xxx' 格式
-				if (rule.includes(',')) {
-					const parts = rule.split(',');
-					return parts[1];
-				}
-				// 其他情况直接返回
-				return rule;
-			})
-			.filter(domain => filterForeignMediaDomains(domain));
+		return parsePayload(text)
+			.map(normalizeDomainPayloadRule)
+			.filter((domain): domain is string => Boolean(domain));
+	});
+
+/**
+ * 获取国外媒体域名规则
+ * 只保留真正的国外媒体服务域名(过滤掉 Microsoft/Apple/Google/开发工具/CDN 等)
+ */
+export const fetchForeignMediaRules = (url: string) => fetchLoyalsoldierDomainRules(url)
+	.then(domains => domains.filter(domain => filterForeignMediaDomains(domain)));
+
+/**
+ * 向后兼容旧函数名。新代码应按用途调用 fetchLoyalsoldierDomainRules / fetchForeignMediaRules。
+ */
+export const fetchLoyalsoldierRules = fetchForeignMediaRules;
+
+/**
+ * 获取 Telegram CIDR 规则
+ */
+export const fetchTelegramCidrRules = (url: string) => fetch(url, {
+	headers: {
+		"User-Agent" : "Clash-Parser/1.0"
+	},
+	signal: AbortSignal.timeout(30000)
+})
+	.then(res => {
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+		}
+		return res.text();
+	})
+	.then(text => {
+		return parsePayload(text)
+			.map(normalizeCidrPayloadRule)
+			.filter((rule): rule is string => Boolean(rule));
 	});
 
 /**
@@ -123,28 +133,9 @@ export const fetchLoyalsoldierDirect = (url: string) => fetch(url, {
 		return res.text();
 	})
 	.then(text => {
-		const yaml: ResContents = parse(text);
-		if (!yaml.payload || !Array.isArray(yaml.payload)) return [];
-		
-		// 过滤并提取域名
-		const domains = yaml.payload
-			.filter(rule => {
-				// 只保留 DOMAIN 相关规则
-				return !rule.startsWith('IP-CIDR,') && !rule.startsWith('IP-CIDR6,');
-			})
-			.map(rule => {
-				// 处理 '+.domain.com' 格式
-				if (rule.startsWith('+.')) {
-					return rule.substring(2);
-				}
-				// 处理 'DOMAIN,xxx' 或 'DOMAIN-SUFFIX,xxx' 格式
-				if (rule.includes(',')) {
-					const parts = rule.split(',');
-					return parts[1];
-				}
-				return rule;
-			})
-			.filter(domain => domain && domain.length > 0);
+		const domains = parsePayload(text)
+			.map(normalizeDomainPayloadRule)
+			.filter((domain): domain is string => Boolean(domain));
 		
 		// 智能筛选策略
 		return smartFilterDirectDomains(domains);
@@ -311,6 +302,60 @@ function filterForeignMediaDomains(domain: string): boolean {
 	});
 	
 	return isMediaDomain;
+}
+
+function parsePayload(text: string): string[] {
+	const yaml: ResContents = parse(text);
+	if (!yaml.payload || !Array.isArray(yaml.payload)) return [];
+	return yaml.payload.map(rule => String(rule).trim()).filter(Boolean);
+}
+
+function normalizeDomainPayloadRule(rule: string): string | null {
+	const cleanedRule = rule.startsWith('- ') ? rule.substring(2).trim() : rule.trim();
+	
+	if (!cleanedRule || cleanedRule.startsWith('IP-CIDR,') || cleanedRule.startsWith('IP-CIDR6,')) {
+		return null;
+	}
+	
+	if (cleanedRule.includes('/')) {
+		return null;
+	}
+	
+	if (cleanedRule.includes(',')) {
+		const [type, value] = cleanedRule.split(',');
+		if (!['DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD', 'DOMAIN-WILDCARD', 'DOMAIN-REGEX'].includes(type)) {
+			return null;
+		}
+		return normalizeDomainValue(value);
+	}
+	
+	return normalizeDomainValue(cleanedRule);
+}
+
+function normalizeDomainValue(value: string): string {
+	return value
+		.trim()
+		.replace(/^\+\.\*\./, '')
+		.replace(/^\+\./, '')
+		.replace(/^\*\./, '');
+}
+
+function normalizeCidrPayloadRule(rule: string): string | null {
+	const cleanedRule = rule.startsWith('- ') ? rule.substring(2).trim() : rule.trim();
+	if (!cleanedRule) return null;
+	
+	if (cleanedRule.startsWith('IP-CIDR,') || cleanedRule.startsWith('IP-CIDR6,')) {
+		const [type, value] = cleanedRule.split(',');
+		if (!value) return null;
+		return `${type},${value},no-resolve`;
+	}
+	
+	if (!cleanedRule.includes('/')) {
+		return null;
+	}
+	
+	const type = cleanedRule.includes(':') ? 'IP-CIDR6' : 'IP-CIDR';
+	return `${type},${cleanedRule},no-resolve`;
 }
 
 /**

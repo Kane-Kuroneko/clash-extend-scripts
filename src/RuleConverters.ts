@@ -136,7 +136,7 @@ export const converters = {
 			};
 			case ruleObject['type'] && ruleObject['value'] && ruleObject['proxy'] && true : {
 				
-				if( (ruleObject as any).resolve === 'no-resove' ){
+				if( (ruleObject as any).resolve === 'no-resolve' ){
 					return `${ ruleObject.type },${ ruleObject['value'] },${ ruleObject.proxy },${ (ruleObject as any).resolve }`;
 				}
 				

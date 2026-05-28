@@ -4,12 +4,26 @@
  */
 
 // ESM Imports (按重要程度排序: 业务模块 > 类型)
-import { ClashConfig, RuleType } from './types/clash';
+import type { ClashConfig, RuleType } from './types/clash';
 import { SelectorSymbols, converters } from './RuleConverters';
 import { Clash, Group } from './ClashConfigBuilder';
 import type { YAML } from './types/client';
 import type { UserCustomRulesConfig } from './types/user-rules';
 import { convert3DRulesToMihomoRules, validate3DRules } from './config/UserCustomRulesConverter';
+
+const SUPPORTED_RULE_TYPES = new Set([
+	'DOMAIN-SUFFIX',
+	'DOMAIN',
+	'DOMAIN-KEYWORD',
+	'IP-CIDR',
+	'IP-CIDR6',
+	'SRC-IP-CIDR',
+	'GEOIP',
+	'PROCESS-NAME',
+	'DST-PORT',
+	'SRC-PORT',
+	'MATCH',
+]);
 
 export class AutoRoutingGroup extends Clash {
 	presetGroups = {
@@ -290,7 +304,7 @@ export class AutoRoutingGroup extends Clash {
 		
 		// 8. Telegram规则 -> Telegram分组
 		const telegramRules = __CompileTime_Rules__.Loyalsoldier_Telegram.map(
-			(domain) => `DOMAIN-SUFFIX,${domain},${this.presetGroups['telegram']}`
+			(rule) => this.attachGroupToRule(rule, this.presetGroups['telegram'], 'DOMAIN-SUFFIX')
 		);
 		rules.push(...telegramRules);
 		
@@ -391,6 +405,17 @@ export class AutoRoutingGroup extends Clash {
 			// 其他情况原样返回
 			return [rule];
 		});
+	}
+
+	attachGroupToRule(rule: string, group: string, fallbackType: keyof typeof RuleType): string {
+		const parts = rule.split(',');
+		const [type, value, ...options] = parts;
+		
+		if (parts.length >= 2 && SUPPORTED_RULE_TYPES.has(type)) {
+			return [type, value, group, ...options].join(',');
+		}
+		
+		return `${fallbackType},${rule},${group}`;
 	}
 	
 	/**
