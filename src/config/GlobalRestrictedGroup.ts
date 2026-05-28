@@ -103,22 +103,16 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 		
 		console.log(`✅ 加载并转换用户原始rules: ${originalRules.length} 条`);
 		
-		return originalRules.map(rule => {
+		return originalRules.flatMap(rule => {
 			const parts = rule.split(',');
 			if (parts.length < 2) {
 				// 格式不正确的rule，原样返回
-				return rule;
+				return [rule];
 			}
 			
-			// MATCH规则只有两部分: MATCH,group
+			// 原始 MATCH 会遮蔽当前模式追加的 GEOIP 和最终 MATCH。
 			if (parts[0] === 'MATCH') {
-				const group = parts[1];
-				// block/REJECT/DIRECT 保持不变
-				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
-					return rule;
-				}
-				// 其他group转换为ProxyA
-				return `MATCH,${proxyAGroup}`;
+				return [];
 			}
 			
 			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
@@ -126,18 +120,18 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 				const group = parts[2];
 				// block/REJECT/DIRECT 保持不变
 				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
-					return rule;
+					return [rule];
 				}
 				// 其他group转换为ProxyA
 				if (parts.length === 4) {
 					// 带no-resolve的规则
-					return `${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`;
+					return [`${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`];
 				}
-				return `${parts[0]},${parts[1]},${proxyAGroup}`;
+				return [`${parts[0]},${parts[1]},${proxyAGroup}`];
 			}
 			
 			// 其他情况原样返回
-			return rule;
+			return [rule];
 		});
 	}
 	

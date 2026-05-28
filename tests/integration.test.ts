@@ -109,6 +109,82 @@ rules:
 `;
 }
 
+const AI_GROUP = '🖥 AI';
+
+const AI_ROUTING_TEST_HOSTS = [
+	// OpenAI / ChatGPT
+	'openai.com',
+	'chatgpt.com',
+	'chat.openai.com',
+	'api.openai.com',
+	'sentinel.openai.com',
+	'cdn.openai.com',
+	'auth.openai.com',
+	'bzrcdn.openai.com',
+	'oaiusercontent.com',
+	'oaistatic.com',
+	
+	// Anthropic / Claude
+	'anthropic.com',
+	'claude.ai',
+	'api.anthropic.com',
+	'console.anthropic.com',
+	
+	// Google AI / Gemini
+	'ai.google',
+	'gemini.google.com',
+	'generativelanguage.googleapis.com',
+	'ai.google.dev',
+	
+	// Microsoft Copilot
+	'copilot.microsoft.com',
+	'copilot.cloud.microsoft',
+	'sydney.bing.com',
+	
+	// 其他主流 AI 服务
+	'perplexity.ai',
+	'midjourney.com',
+	'stability.ai',
+	'huggingface.co',
+	'mistral.ai',
+	'openrouter.ai'
+] as const;
+
+function normalizeDomain(value: string): string {
+	return value.replace(/^\+\./, '').toLowerCase();
+}
+
+function domainMatchesSuffix(hostname: string, suffix: string): boolean {
+	const normalizedHostname = hostname.toLowerCase();
+	const normalizedSuffix = normalizeDomain(suffix);
+	
+	return normalizedHostname === normalizedSuffix || normalizedHostname.endsWith(`.${normalizedSuffix}`);
+}
+
+function findFirstDomainRuleMatch(rules: string[], hostname: string) {
+	for (const [index, rule] of rules.entries()) {
+		const [type, value, group] = rule.split(',');
+		
+		if (type === 'DOMAIN' && normalizeDomain(value) === hostname.toLowerCase()) {
+			return { index, rule, type, value, group };
+		}
+		
+		if (type === 'DOMAIN-SUFFIX' && domainMatchesSuffix(hostname, value)) {
+			return { index, rule, type, value, group };
+		}
+		
+		if (type === 'DOMAIN-KEYWORD' && hostname.toLowerCase().includes(value.toLowerCase())) {
+			return { index, rule, type, value, group };
+		}
+		
+		if (type === 'MATCH') {
+			return { index, rule, type, value: '', group: value };
+		}
+	}
+	
+	return null;
+}
+
 describe('CVR 客户端业务逻辑测试', () => {
 	describe('Global Proxy 模式', () => {
 		it('应该正确处理配置并返回修改后的配置对象', () => {
@@ -194,8 +270,16 @@ describe('CVR 客户端业务逻辑测试', () => {
 			assert.ok(result.success);
 			
 			const config = result.output;
+			const matchRules = config.rules?.filter((r: string) => 
+				r.startsWith('MATCH,')
+			) || [];
 			const lastRule = config.rules?.[config.rules.length - 1];
 			
+			assert.strictEqual(
+				matchRules.length,
+				1,
+				`应该只保留当前模式生成的尾部 MATCH，实际: ${matchRules.join(' | ')}`
+			);
 			assert.ok(
 				lastRule?.startsWith('MATCH,'),
 				'最后一条规则应该是 MATCH'
@@ -294,8 +378,16 @@ describe('CVR 客户端业务逻辑测试', () => {
 			assert.ok(result.success);
 			
 			const config = result.output;
+			const matchRules = config.rules?.filter((r: string) => 
+				r.startsWith('MATCH,')
+			) || [];
 			const lastRule = config.rules?.[config.rules.length - 1];
 			
+			assert.strictEqual(
+				matchRules.length,
+				1,
+				`应该只保留当前模式生成的尾部 MATCH，实际: ${matchRules.join(' | ')}`
+			);
 			assert.ok(
 				lastRule?.startsWith('MATCH,'),
 				'最后一条规则应该是 MATCH'
@@ -394,6 +486,50 @@ describe('CVR 客户端业务逻辑测试', () => {
 				microsoftRules.includes('DOMAIN-KEYWORD,microsoft'),
 				'Microsoft 规则应该包含 DOMAIN-KEYWORD,microsoft'
 			);
+		});
+	});
+
+	describe('AI 分流规则测试', () => {
+		it('应该创建 🖥 AI 代理组', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success);
+			
+			const validation = validateConfigResult(result.output, {
+				hasProxyGroups: ['🖥 AI']
+			});
+			
+			assert.ok(
+				validation.success,
+				`验证失败: ${validation.messages.join(', ')}`
+			);
+		});
+
+		it('主流 AI 厂商域名的首条匹配应该走 AI 分组而不是 MATCH', () => {
+			const testConfig = createTestConfig();
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success, `执行失败: ${result.error?.message}`);
+			
+			const config = result.output;
+			assert.ok(Array.isArray(config.rules), '应该生成 rules 数组');
+			
+			for (const hostname of AI_ROUTING_TEST_HOSTS) {
+				const match = findFirstDomainRuleMatch(config.rules, hostname);
+				
+				assert.ok(match, `${hostname} 应该至少匹配到一条规则`);
+				assert.notStrictEqual(
+					match.type,
+					'MATCH',
+					`${hostname} 不应该漏到 MATCH，实际首条匹配: ${match.rule}`
+				);
+				assert.strictEqual(
+					match.group,
+					AI_GROUP,
+					`${hostname} 应该首条匹配到 ${AI_GROUP}，实际首条匹配: ${match.rule}`
+				);
+			}
 		});
 	});
 });

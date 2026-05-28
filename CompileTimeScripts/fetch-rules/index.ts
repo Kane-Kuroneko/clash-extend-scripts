@@ -10,6 +10,7 @@ export const fetchRules = async () => {
 		Loyalsoldier_Apple_result,
 		Loyalsoldier_Direct_result,
 		Microsoft_result,
+		AI_result,
 	] = await Promise.all([
 		fetchWithRetry('CN_bilibili', () => fetchGithubRules(CN_bilibili)),
 		fetchWithRetry('INTL_bilibili', () => fetchGithubRules(INTL_bilibili)),
@@ -20,6 +21,7 @@ export const fetchRules = async () => {
 		fetchWithRetry('Loyalsoldier_Apple', () => fetchLoyalsoldierRules(Loyalsoldier_Apple)),
 		fetchWithRetry('Loyalsoldier_Direct', () => fetchLoyalsoldierDirect(Loyalsoldier_Direct_Filtered)),
 		fetchWithRetry('Microsoft', () => fetchMicrosoftRules(Microsoft_Rules)),
+		fetchWithRetry('AI', () => fetchAIRules()),
 	]);
 
 	return {
@@ -32,6 +34,7 @@ export const fetchRules = async () => {
 		Loyalsoldier_Apple: Loyalsoldier_Apple_result,
 		Loyalsoldier_Direct: Loyalsoldier_Direct_result,
 		Microsoft: Microsoft_result,
+		AI: AI_result,
 	};
 }
 
@@ -180,6 +183,14 @@ export const fetchMicrosoftRules = (url: string) => fetch(url, {
 				return cleanedRule;
 			});
 	});
+
+/**
+ * 获取AI服务规则
+ * 返回AI服务域名列表
+ */
+export const fetchAIRules = (): Promise<string[]> => {
+	return Promise.resolve(AI_Services);
+};
 
 /**
  * 带重试机制的 fetch 包装器
@@ -356,6 +367,7 @@ import { parse } from 'yaml';
 import { CN_bilibili } from './bilibili.cn';
 import { INTL_bilibili } from './bilibili.intl';
 import { Blocked_By_GFW } from './blocked-by-gfw';
+import { AI_Services } from './ai-services';
 
 // Loyalsoldier/clash-rules 规则源 URL (release分支)
 const LOYALSOLDIER_BASE = 'https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release';

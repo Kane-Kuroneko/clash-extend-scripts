@@ -11,7 +11,7 @@ import { GlobalRestrictedGroup } from './GlobalRestrictedGroup';
 
 // Mock 编译时规则数据(在模块加载前注入)
 const mockCompileTimeRules = {
-	Loyalsoldier_GFW: ['google.com', 'facebook.com', 'twitter.com'],
+	Loyalsoldier_GFW: ['openai.com', 'google.com', 'facebook.com', 'twitter.com'],
 	Loyalsoldier_Proxy: ['netflix.com', 'youtube.com', 'spotify.com'],
 	Loyalsoldier_Telegram: ['telegram.org', 't.me'],
 	Microsoft: ['DOMAIN-SUFFIX,microsoft.com', 'DOMAIN-SUFFIX,office.com', 'DOMAIN-KEYWORD,windows'],
@@ -19,7 +19,8 @@ const mockCompileTimeRules = {
 	Loyalsoldier_Direct: ['baidu.com', 'qq.com', 'taobao.com'],
 	CN_bilibili: ['bilibili.com'],
 	ITNL_bilibili: ['+.*.bilibili.com'],
-	Blocked_By_GFW: ['+.google.com']
+	Blocked_By_GFW: ['+.google.com'],
+	AI: ['openai.com', 'anthropic.com', 'claude.ai', 'copilot.microsoft.com']
 };
 
 // 注入全局变量
@@ -117,6 +118,28 @@ describe('ConfigFactory 测试', () => {
 			assert.ok(groupNames.some(name => name.includes('GFW')), '应该包含 GFW 分组');
 			assert.ok(groupNames.some(name => name.includes('Proxy A')), '应该包含 Proxy A 分组');
 			assert.ok(groupNames.some(name => name.includes('Foreign Media')), '应该包含 Foreign Media 分组');
+		});
+
+		it('AI 规则应该先于通用 GFW 和 Microsoft 规则', () => {
+			const config = ConfigFactory.createConfig(
+				'auto-routing',
+				mockSource as any,
+				mockDeps as any,
+				mockParams
+			) as AutoRoutingGroup;
+
+			const rules = config.source.rules;
+			const openaiAIIndex = rules.indexOf('DOMAIN-SUFFIX,openai.com,🖥 AI');
+			const openaiGfwIndex = rules.indexOf('DOMAIN-SUFFIX,openai.com,❄️ GFW');
+			const copilotAIIndex = rules.indexOf('DOMAIN-SUFFIX,copilot.microsoft.com,🖥 AI');
+			const microsoftIndex = rules.indexOf('DOMAIN-SUFFIX,microsoft.com,Ⓜ️ Microsoft');
+
+			assert.ok(openaiAIIndex >= 0, '应该包含 openai.com 的 AI 规则');
+			assert.ok(openaiGfwIndex >= 0, '测试夹具应该包含 openai.com 的 GFW 规则');
+			assert.ok(openaiAIIndex < openaiGfwIndex, 'openai.com 的 AI 规则应该先于 GFW 规则');
+			assert.ok(copilotAIIndex >= 0, '应该包含 copilot.microsoft.com 的 AI 规则');
+			assert.ok(microsoftIndex >= 0, '应该包含 Microsoft 通用规则');
+			assert.ok(copilotAIIndex < microsoftIndex, 'Copilot AI 规则应该先于 Microsoft 通用规则');
 		});
 	});
 
