@@ -10,6 +10,7 @@ import { Clash, Group } from './ClashConfigBuilder';
 import type { YAML } from './types/client';
 import type { UserCustomRulesConfig } from './types/user-rules';
 import { convert3DRulesToMihomoRules, validate3DRules } from './config/UserCustomRulesConverter';
+import { collectAvailableRulePolicyTargets } from './config/RulePolicyTargets';
 
 const SUPPORTED_RULE_TYPES = new Set([
 	'DOMAIN-SUFFIX',
@@ -369,11 +370,16 @@ export class AutoRoutingGroup extends Clash {
 	
 	/**
 	 * 转换用户原始rules的group名称
-	 * - block/REJECT/DIRECT 保持不变
-	 * - 其他group统一转换为 ProxyA
+	 * - 已存在的内置策略、预设分组、自定义分组、代理节点保持不变
+	 * - 指向已被清空的原始订阅分组时，降级到 ProxyA，避免悬空 policy
 	 */
 	convertOriginalRules(originalRules: string[]): string[] {
 		const proxyAGroup = this.presetGroups[SelectorSymbols.ManualA];
+		const availablePolicyTargets = collectAvailableRulePolicyTargets(
+			this.presetGroups,
+			this.proxiesList,
+			this.userRules.groups,
+		);
 		
 		return originalRules.flatMap(rule => {
 			const parts = rule.split(',');
@@ -390,13 +396,11 @@ export class AutoRoutingGroup extends Clash {
 			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
 			if (parts.length >= 3) {
 				const group = parts[2];
-				// block/REJECT/DIRECT 保持不变
-				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+				if (availablePolicyTargets.has(group)) {
 					return [rule];
 				}
-				// 其他group转换为ProxyA
+				
 				if (parts.length === 4) {
-					// 带no-resolve的规则
 					return [`${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`];
 				}
 				return [`${parts[0]},${parts[1]},${proxyAGroup}`];

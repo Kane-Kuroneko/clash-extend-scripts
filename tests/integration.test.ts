@@ -408,6 +408,25 @@ describe('CVR 客户端业务逻辑测试', () => {
 			assert.ok(hasGeoIPRule, '应该包含 GEOIP,CN 规则');
 		});
 
+		it('应该保留 CVR 原始 rules 中指向 🍀 Proxy B 🍀 的规则', () => {
+			const testConfig = createTestConfig();
+			testConfig.rules.unshift('DOMAIN-SUFFIX,dola.com,🍀 Proxy B 🍀');
+			
+			const result = testMainFunction('cvr', 'auto-routing', testConfig);
+			
+			assert.ok(result.success, `执行失败: ${result.error?.message}`);
+			
+			const rules = result.output.rules || [];
+			assert.ok(
+				rules.includes('DOMAIN-SUFFIX,dola.com,🍀 Proxy B 🍀'),
+				'dola.com 应该保留指向 Proxy B'
+			);
+			assert.ok(
+				!rules.includes('DOMAIN-SUFFIX,dola.com,🫧 Proxy A 🫧'),
+				'dola.com 不应该被改写到 Proxy A'
+			);
+		});
+
 		it('应该包含大量 Microsoft 规则', () => {
 			const testConfig = createTestConfig();
 			const result = testMainFunction('cvr', 'auto-routing', testConfig);

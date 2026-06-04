@@ -7,6 +7,7 @@
 import { RoutingConfig } from './RoutingConfig';
 import { Group } from '../ClashConfigBuilder';
 import { SelectorSymbols } from '../RuleConverters';
+import { collectAvailableRulePolicyTargets } from './RulePolicyTargets';
 import type { ClientDependencies, ClientParams, ClientSource } from '../types/client';
 
 export class GlobalRestrictedGroup extends RoutingConfig {
@@ -90,12 +91,16 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 	
 	/**
 	 * 转换用户原始rules的group名称
-	 * - block/REJECT/DIRECT 保持不变
-	 * - 其他group统一转换为 ProxyA
+	 * - 已存在的内置策略、预设分组、代理节点保持不变
+	 * - 指向已被清空的原始订阅分组时，降级到 Global Proxy，避免悬空 policy
 	 */
 	convertOriginalRules(): string[] {
 		const proxyAGroup = this.presetGroups[SelectorSymbols.ManualA];
 		const originalRules = this.originalRules || [];
+		const availablePolicyTargets = collectAvailableRulePolicyTargets(
+			this.presetGroups,
+			this.proxiesList,
+		);
 		
 		if (originalRules.length === 0) {
 			return [];
@@ -118,13 +123,11 @@ export class GlobalRestrictedGroup extends RoutingConfig {
 			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
 			if (parts.length >= 3) {
 				const group = parts[2];
-				// block/REJECT/DIRECT 保持不变
-				if (group === 'block' || group === 'REJECT' || group === 'DIRECT') {
+				if (availablePolicyTargets.has(group)) {
 					return [rule];
 				}
-				// 其他group转换为ProxyA
+				
 				if (parts.length === 4) {
-					// 带no-resolve的规则
 					return [`${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`];
 				}
 				return [`${parts[0]},${parts[1]},${proxyAGroup}`];

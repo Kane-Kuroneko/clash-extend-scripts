@@ -159,6 +159,46 @@ describe('ConfigFactory 测试', () => {
 				'应该包含 Telegram IPv6 CIDR 规则'
 			);
 		});
+
+		it('auto-routing 应该保留原始 rules 中已存在的预设分组和代理节点', () => {
+			const config = ConfigFactory.createConfig(
+				'auto-routing',
+				{
+					source: {
+						proxies: [
+							{ name: 'Proxy1', type: 'ss', server: 'test.com', port: 443, password: 'test', udp: false }
+						],
+						'proxy-groups': [],
+						rules: [
+							'DOMAIN-SUFFIX,dola.com,🍀 Proxy B 🍀',
+							'DOMAIN-SUFFIX,node-target.example,Proxy1',
+							'DOMAIN-SUFFIX,legacy-group.example,GLOBAL',
+							'MATCH,DIRECT'
+						]
+					},
+					raw: ''
+				} as any,
+				mockDeps as any,
+				mockParams
+			) as AutoRoutingGroup;
+
+			assert.ok(
+				config.source.rules.includes('DOMAIN-SUFFIX,dola.com,🍀 Proxy B 🍀'),
+				'Proxy B 预设分组不应该被改写为 Proxy A'
+			);
+			assert.ok(
+				config.source.rules.includes('DOMAIN-SUFFIX,node-target.example,Proxy1'),
+				'仍存在的代理节点可以作为规则 policy 目标'
+			);
+			assert.ok(
+				config.source.rules.includes('DOMAIN-SUFFIX,legacy-group.example,🫧 Proxy A 🫧'),
+				'已被清空的原始订阅分组应该降级到 Proxy A'
+			);
+			assert.ok(
+				!config.source.rules.includes('DOMAIN-SUFFIX,dola.com,🫧 Proxy A 🫧'),
+				'不应生成被错误改写的 dola.com 规则'
+			);
+		});
 	});
 
 	describe('模式特性验证', () => {
