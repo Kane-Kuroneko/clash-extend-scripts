@@ -14,6 +14,7 @@ const testFiles = [
 	'src/ClashConfigBuilder.test.ts',
 	'src/config/ConfigFactory.test.ts',
 	'src/config/UserCustomRulesConverter.test.ts',  // 三维规则转换器测试
+	'tests/realworld-yaml-test.ts',  // 真实机场配置边界测试
 ];
 
 let allPassed = true;

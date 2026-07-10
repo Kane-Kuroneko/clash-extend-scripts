@@ -81,7 +81,7 @@ export class AutoRoutingGroup extends Clash {
 		// 注意：不能重新赋值 this.source = source，否则会覆盖基类中已清空的配置
 		this.console = console;
 		this.yaml = yaml;
-		this.proxiesList = source.proxies.map( ( proxy ) => proxy.name );
+		this.proxiesList = source.proxies?.map( ( proxy ) => proxy.name ) || [];
 		
 		// 加载用户自定义规则（通过编译时注入）
 		this.userRules = typeof __USER_CUSTOM_RULES__ !== 'undefined' 
@@ -381,31 +381,53 @@ export class AutoRoutingGroup extends Clash {
 			this.userRules.groups,
 		);
 		
+				const LOGIC_RULE_TYPES = new Set(['AND', 'NOT', 'OR']);
+
 		return originalRules.flatMap(rule => {
 			const parts = rule.split(',');
 			if (parts.length < 2) {
 				// 格式不正确的rule，原样返回
 				return [rule];
 			}
-			
+
 			// 原始 MATCH 会遮蔽所有 auto-routing 生成规则，当前模式只保留自己最终追加的 MATCH。
 			if (parts[0] === 'MATCH') {
 				return [];
 			}
-			
+
+			// Logic 规则 (AND/NOT/OR): policy 目标在最后一个元素
+			// 例: AND,((DST-PORT,443),(NETWORK,UDP)),REJECT → group = REJECT
+			if (LOGIC_RULE_TYPES.has(parts[0])) {
+				const lastIdx = parts.length - 1;
+				const group = parts[lastIdx];
+
+				// 丢弃带有 no-resolve 后缀的逻辑规则——非标准格式且通常是机场的保护/反泄漏措施。
+				// 这些规则对用户无实际作用，保留反而可能导致 Clash/Mihomo 报 payload format error。
+				if (group === 'no-resolve') {
+					return [];
+				}
+
+				if (availablePolicyTargets.has(group)) {
+					return [rule];
+				}
+				const newParts = [...parts];
+				newParts[lastIdx] = proxyAGroup;
+				return [newParts.join(',')];
+			}
+
 			// 普通规则: TYPE,value,group 或 TYPE,value,group,no-resolve
 			if (parts.length >= 3) {
 				const group = parts[2];
 				if (availablePolicyTargets.has(group)) {
 					return [rule];
 				}
-				
+
 				if (parts.length === 4) {
 					return [`${parts[0]},${parts[1]},${proxyAGroup},${parts[3]}`];
 				}
 				return [`${parts[0]},${parts[1]},${proxyAGroup}`];
 			}
-			
+
 			// 其他情况原样返回
 			return [rule];
 		});
