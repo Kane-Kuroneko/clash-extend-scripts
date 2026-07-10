@@ -1,16 +1,17 @@
-name: Release Build and Upload
+name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  build-and-upload:
+  release:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
@@ -24,26 +25,24 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build all
-      run: npm run build:all
-
     - name: Run all tests
       run: npm run test:all
 
-    - name: Rename dist files with prefixes
+    - name: Build all
+      run: npm run build:all
+
+    - name: Flatten dist for release
       run: |
-        mkdir -p dist-renamed
+        mkdir -p dist-release
         for file in $(find dist -name "*.js"); do
-          # 获取相对路径，例如 cfw/cfw-global-proxy.js
           relative_path=${file#dist/}
-          # 将 / 替换为 - 作为前缀，例如 cfw-global-proxy.js
           new_name=$(echo "$relative_path" | sed 's/\//-/g')
-          cp "$file" "dist-renamed/$new_name"
+          cp "$file" "dist-release/$new_name"
         done
 
-    - name: Upload release assets
+    - name: Create Release & Upload Assets
       uses: softprops/action-gh-release@v2
       with:
-        files: dist-renamed/*.js
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: Release ${{ github.ref_name }}
+        generate_release_notes: true
+        files: dist-release/*.js
