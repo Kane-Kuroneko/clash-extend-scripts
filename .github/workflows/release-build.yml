@@ -34,7 +34,7 @@ jobs:
       run: |
         mkdir -p dist-renamed
         for file in $(find dist -name "*.js"); do
-          # 获取相对路径，例如 cfw/global-proxy.js
+          # 获取相对路径，例如 cfw/cfw-global-proxy.js
           relative_path=${file#dist/}
           # 将 / 替换为 - 作为前缀，例如 cfw-global-proxy.js
           new_name=$(echo "$relative_path" | sed 's/\//-/g')

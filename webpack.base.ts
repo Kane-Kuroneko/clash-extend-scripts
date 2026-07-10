@@ -96,6 +96,11 @@ if (args['user-rules']) {
 	console.log('💡 未指定用户自定义规则文件，使用 --user-rules 参数加载');
 }
 
+// 获取客户端的短前缀用于文件名
+function clientPrefix(client: string): string {
+	return client === 'clash-party' ? 'cparty' : client;
+}
+
 const conf: Configuration = {
 	mode: 'production',
 	entry: {
@@ -105,7 +110,8 @@ const conf: Configuration = {
 				: clientArg === 'cvr'
 					? './src/clients/clash-verge/main.ts'
 					: './src/clients/clash-party/main.ts',
-			filename: `${clientArg}/${modeArg}.js`,
+			// 为不同客户端生成可区分的文件前缀
+			filename: `${clientArg}/${clientPrefix(clientArg)}-${modeArg}.js`,
 			// CFW 需要 commonjs2 导出,CVR 和 Clash Party 不配置 library,直接在源码中导出
 			...(clientArg === 'cfw' ? { library: { type: 'commonjs2' } } : {})
 		}

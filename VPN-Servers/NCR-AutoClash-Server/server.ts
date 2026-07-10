@@ -457,7 +457,7 @@ async function applyAutoRouting(proxies: any[]): Promise<any> {
 	const currentDir = path.dirname(__filename);
 	// 从 VPN-Servers/auto-routing/ 向上两级到 parser/
 	const projectRoot = path.resolve(currentDir, '../..');
-	const scriptPath = path.join(projectRoot, 'dist/cvr/auto-routing.js');
+	const scriptPath = path.join(projectRoot, 'dist/cvr/cvr-auto-routing.js');
 	
 	// 读取编译后的脚本
 	const scriptContent = readFileSync(scriptPath, 'utf-8');

@@ -2,7 +2,7 @@
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
-const filePath = join(__dirname, '..', 'dist', 'cvr', 'global-proxy.js');
+const filePath = join(__dirname, '..', 'dist', 'cvr', 'cvr-global-proxy.js');
 const code = readFileSync(filePath, 'utf-8');
 
 console.log('执行前 globalThis.main:', typeof globalThis.main);

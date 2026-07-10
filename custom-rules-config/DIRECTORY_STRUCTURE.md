@@ -120,7 +120,7 @@ Mihomo AND 规则
   ↓ (集成)
 src/AutoRoutingConfig.ts
   ↓ (构建)
-dist/cvr/auto-routing.js
+dist/cvr/cvr-auto-routing.js
 ```
 
 ---

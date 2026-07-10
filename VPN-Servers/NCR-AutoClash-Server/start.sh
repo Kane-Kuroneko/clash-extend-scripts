@@ -28,7 +28,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # 检查编译后的文件是否存在
-if [ ! -f "../../dist/cvr/auto-routing.js" ]; then
+if [ ! -f "../../dist/cvr/cvr-auto-routing.js" ]; then
     echo "🔨 编译 CVR Auto-Routing 脚本..."
     cd ../..
     npm run build:cvr:auto

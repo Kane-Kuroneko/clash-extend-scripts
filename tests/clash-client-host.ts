@@ -81,7 +81,7 @@ export function loadAndExecuteBuild(
 	
 	// 返回一个包装函数，在调用时才通过子进程执行
 	const mainFunc = (config?: any) => {
-		const buildPath = join(process.cwd(), 'dist', client, `${mode}.js`);
+		const buildPath = join(process.cwd(), 'dist', client, `${client}-${mode}.js`);
 		const tempFile = join(process.cwd(), 'tests', '.temp-test.js');
 		
 		try {

@@ -116,7 +116,7 @@ npm run build:cvr:auto:custom
 规则数据大小: 645.37 KB
 尝试加载用户自定义规则: Z:\parser\custom-rules-config\user-rules.ts
 ✅ 用户自定义规则加载成功: rules3D=5, simpleRules(prepend=0, append=0), groups=0
-asset cvr/auto-routing.js 697 KiB [emitted] [minimized] (name: cvr-auto-routing)
+asset cvr/cvr-auto-routing.js 697 KiB [emitted] [minimized] (name: cvr-auto-routing)
 webpack 5.105.4 compiled successfully in 1570 ms
 ```
 
@@ -147,7 +147,7 @@ const importPath = isWindows
 
 #### 产物位置
 ```
-dist/cvr/auto-routing.js
+dist/cvr/cvr-auto-routing.js
 ```
 
 #### 产物大小
