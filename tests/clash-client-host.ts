@@ -7,6 +7,11 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import { join } from 'path';
 
+// 与 webpack.base.ts 中的 clientPrefix() 保持一致
+function clientPrefix(client: string): string {
+	return client === 'clash-party' ? 'cparty' : client;
+}
+
 export interface ClashClientHost {
 	// CFW 环境依赖
 	axios?: any;
@@ -81,7 +86,7 @@ export function loadAndExecuteBuild(
 	
 	// 返回一个包装函数，在调用时才通过子进程执行
 	const mainFunc = (config?: any) => {
-		const buildPath = join(process.cwd(), 'dist', client, `${client}-${mode}.js`);
+		const buildPath = join(process.cwd(), 'dist', client, `${clientPrefix(client)}-${mode}.js`);
 		const tempFile = join(process.cwd(), 'tests', '.temp-test.js');
 		
 		try {
