@@ -35,9 +35,7 @@ jobs:
       run: |
         mkdir -p dist-release
         for file in $(find dist -name "*.js"); do
-          relative_path=${file#dist/}
-          new_name=$(echo "$relative_path" | sed 's/\//-/g')
-          cp "$file" "dist-release/$new_name"
+          cp "$file" "dist-release/$(basename "$file")"
         done
 
     - name: Create Release & Upload Assets
